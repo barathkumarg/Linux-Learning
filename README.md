@@ -15,3 +15,7 @@ and prone to man in the middle attacks.
 SSH creating a secure channel between local and remote computers,
 SSH is used to manage routers, server hardware, virtualization platforms, 
 operating systems (OSes), and inside systems management and file transfer applications.
+
+### [SSH Process win virtual machine machine](https://averagelinuxuser.com/ssh-into-virtualbox/)
+- Installation of ssh-server in the host machine, such that which the machine to be accessed
+- Applying the NAT Rule 
