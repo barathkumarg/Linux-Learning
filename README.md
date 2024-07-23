@@ -1,13 +1,8 @@
 # Linux-Learning
 About Linux
-## TO Explore
-1. Linux - Basic OS Concepts
-2. VM, SSH and Linux Architecture
-3. Linux Commands
-4. Text editors
-5. Process and useful tools
-6. Networking
-7. Package installation
+## Content
+1. [Linux - Basic OS Concepts](#os-concepts-for-devops)
+2. [SSH](#SSH)
 
 # Introduction
 - [Linux History](https://hackernoon.com/an-overview-of-the-linux-operating-system-for-beginners)
@@ -27,37 +22,16 @@ About Linux
   - [Stage 2 boot loader](#stage-2-boot-loader)
   - [Kernel](#kernel)
   - [Init](#init)
-    - [Resources:](#resources)
 - [Process and Process Management](#process-and-process-management)
-  - [Concepts](#concepts)
-  - [Resources:](#resources-1)
 - [Linux Signals](#linux-signals)
-  - [Concepts](#concepts-1)
-  - [Resources:](#resources-2)
 - [Threads and Concurrency](#threads-and-concurrency)
-  - [Concepts](#concepts-2)
-  - [Resources:](#resources-3)
 - [Scheduling](#scheduling)
-  - [Concepts](#concepts-3)
-  - [Resources:](#resources-4)
 - [Memory Management](#memory-management)
-  - [Concepts](#concepts-4)
-  - [Resources:](#resources-5)
 - [Inter-Process Communication](#inter-process-communication)
-  - [Concepts](#concepts-5)
-  - [Resources:](#resources-6)
 - [I/O Management](#io-management)
-  - [Concepts](#concepts-6)
-  - [Resources:](#resources-7)
 - [Virtualization](#virtualization)
-  - [Concepts](#concepts-7)
-  - [Resources:](#resources-8)
 - [Distributed File Systems](#distributed-file-systems)
-  - [Concepts](#concepts-8)
-  - [Resources:](#resources-9)
 - [Cloud Computing](#cloud-computing)
-  - [concepts](#concepts)
-  - [Resources:](#resources-10)
 - [References:](#references)
 
 *********************
@@ -139,8 +113,7 @@ The 3 types of Operating Systems commonly used nowadays are: (1) Monolithic OS, 
 - [Linux Insides](https://0xax.gitbooks.io/linux-insides/content/Booting/linux-bootstrap-1.html)
 - [ A step by step tutorial for understanding Linux boot sequence](www.slashroot.in/linux-booting-process-step-step-tutorial-understanding-linux-boot-sequence)
 - [The Upstart Event System: What It Is And How To Use It](https://www.digitalocean.com/community/tutorials/the-upstart-event-system-what-it-is-and-how-to-use-it)
-- [Linux Boot Process Explained in Simple Steps ](https://linoxide.com/booting/boot-process-of-linux-in-detail/)
-- [Understanding a little more about /etc/profile and /etc/bashrc](https://bencane.com/2013/09/16/understanding-a-little-more-about-etcprofile-and-etcbashrc/)
+- [Understanding a little more about /etc/profile and /etc/bashrc](https://www.baeldung.com/linux/bashrc-vs-bash-profile-vs-profile)
 
 **********************
 ## Process and Process Management
