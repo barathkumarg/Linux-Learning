@@ -1,8 +1,10 @@
 # Linux-Learning
 About Linux
 ## Content
-1. [Linux - Basic OS Concepts](#os-concepts-for-devops)
-2. [SSH](#SSH)
+1. [Introduction](#Introduction)
+2. [Linux - Basic OS Concepts](#os-concepts-for-devops)
+3. [SSH](#SSH)
+4. [Linux Architecture](#Linux Architecture)
 
 # Introduction
 - [Linux History](https://hackernoon.com/an-overview-of-the-linux-operating-system-for-beginners)
@@ -597,3 +599,14 @@ operating systems (OSes), and inside systems management and file transfer applic
 - Installation of ssh-server in the host machine, such that which the machine to be accessed
 - Installation of ssh-client in the machine which supposed to be accessing the remote server
 - Applying the NAT Rule 
+
+
+# Linux Architecture
+![](https://miro.medium.com/v2/resize:fit:1400/1*j-lqtJWO644dz7mF6YZ5KQ.png)
+
+Application layer: Command or input either be the command or GUI 
+
+SHELL: Acts as the interface between the kernel and Application, Basically the command will be executed
+[Types of shell](https://www.serverwala.com/blog/what-are-the-8-types-of-linux-shells/)
+
+Kernel: Interacts with the Hardware to execute the user requested tasks.
