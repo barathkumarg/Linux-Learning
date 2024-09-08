@@ -595,7 +595,7 @@ SSH creating a secure channel between local and remote computers,
 SSH is used to manage routers, server hardware, virtualization platforms, 
 operating systems (OSes), and inside systems management and file transfer applications.
 
-### [SSH Process win virtual machine machine](https://averagelinuxuser.com/ssh-into-virtualbox/)
+### [SSH Process in virtual machine machine](https://averagelinuxuser.com/ssh-into-virtualbox/)
 - Installation of ssh-server in the host machine, such that which the machine to be accessed
 - Installation of ssh-client in the machine which supposed to be accessing the remote server
 - Applying the NAT Rule 
@@ -610,3 +610,6 @@ SHELL: Acts as the interface between the kernel and Application, Basically the c
 [Types of shell](https://www.serverwala.com/blog/what-are-the-8-types-of-linux-shells/)
 
 Kernel: Interacts with the Hardware to execute the user requested tasks.
+
+## [Linux File structure](https://www.geeksforgeeks.org/linux-file-hierarchy-structure/)
+![](https://media.geeksforgeeks.org/wp-content/uploads/20230516105759/151.webp)
