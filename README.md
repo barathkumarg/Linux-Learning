@@ -4,7 +4,7 @@ About Linux
 1. [Introduction](#Introduction)
 2. [Linux - Basic OS Concepts](#os-concepts-for-devops)
 3. [SSH](#SSH)
-4. [Linux Architecture](#Linux Architecture)
+4. [Linux Architecture](#linux-architecture)
 
 # Introduction
 - [Linux History](https://hackernoon.com/an-overview-of-the-linux-operating-system-for-beginners)
@@ -613,3 +613,29 @@ Kernel: Interacts with the Hardware to execute the user requested tasks.
 
 ## [Linux File structure](https://www.geeksforgeeks.org/linux-file-hierarchy-structure/)
 ![](https://media.geeksforgeeks.org/wp-content/uploads/20230516105759/151.webp)
+
+## Basic Linux Commands
+
+### Help docs - man command
+```man <command>```  displays the description or usage of the actual command
+### Listing the Files or Directory
+```ls``` lists the files or directory in the existing path
+
+``ll`` detailed description about the files 
+
+``ls -lhrt`` short hand which displays the detailed description such as created time, file size etc of file or directory
+
+### Creating the file
+```cat > <filename> ``` ctrl+d to exist creates the file, creates single file at a time can give the content in the next line and exit to
+give the content at the time of creation
+
+``touch <file1> <file2> ..`` Can create multiple files at a time, cannot give content at creation
+
+``echo "<content>" > <filename>`` Creates the file with content, cannot create multiple files at a time.
+
+### Appending the file
+``cat >> <filename> <ENTER> <content>`` Appends the content to the file
+
+``echo <content> >> <filename>`` Appends the content to file using the echo command
+
+Note: In the both above mentioned cases multiple file append is not possible
