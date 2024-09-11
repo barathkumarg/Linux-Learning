@@ -639,3 +639,35 @@ give the content at the time of creation
 ``echo <content> >> <filename>`` Appends the content to file using the echo command
 
 Note: In the both above mentioned cases multiple file append is not possible
+
+### Creating the directory
+``mkdir <directory_name>`` Creates the directory
+
+``mkdir -m 777 <directory_name>`` Creates the directory with permission (-m flag)
+
+``mkdir -p <directory>/{sub_directory/{..}..}`` Creates the recursive sub directories
+
+### Copy file/directory
+``cp <source_file> <destination_dir>`` copies the files
+
+``cp -rvfp <source_dir> <destination_dir>`` copies the directory
+
+```
+flags: 
+r-recursive, v-verbose (description), f-force (no acknowledgement), p-preserve (keep original meta) 
+
+without p flag the modified date will get updated on copied action time (meta changes)
+```
+
+### Move/Rename file/directory
+``mv <source_file/dir>  <destination_file/dir>`` Moves/rename/overright the file or folder as per the scenario
+
+### Remove file/directory
+``rm <filename>`` deletes the file
+
+``rm -rf <directory>`` deletes the directory
+
+```
+flags:
+r-recursive, f-force (avoids the prompt scenario)
+```
