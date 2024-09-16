@@ -1,3 +1,8 @@
+## Content
+1. [Basic Commands](#basic-linux-commands)
+2. [VI Editor](#vi-editor)
+
+
 ## Basic Linux Commands
 
 ### Help docs - man command
@@ -57,3 +62,54 @@ r-recursive, f-force (avoids the prompt scenario)
 ```
 
 ## VI Editor
+### Basic Command
+``vi <filename>``  To open the file
+
+### Extended Command Mode
+Operations performed in command Mode or after pressing ESC
+
+``:q!`` Exit file without saving the changes
+
+``:x`` or ``:wq!`` Saves the content in file and exit
+
+``:set nu`` sets the line number
+
+``Note: here ! means do the action forcefully`` 
+
+### Command Mode (Default Mode, ESC)
+``gg`` moves cursor to beginning of the file
+
+``G`` moves cursor to the end of the file
+
+``w`` moves one word forward
+
+``b`` moves one word backward
+
+``nw`` eg: 5W, moves 5 word forward
+
+``nb`` moves n word backward
+
+``u`` undo the changes, (useful while making changes in Insert Mode)
+
+``ctrl+r`` redo the changes
+
+``yy`` copy the line were the cursor, (will not copy to main clipboard, ctrl+v not works)
+
+``nyy`` eg: 5yy, copies 5 line from the cursor
+
+``p`` paste the copied content below the cursor
+
+``P`` paste the copied content above the cursor
+
+``dd`` deletes the entire line, where cursor placed
+
+``ndd`` eg:5dd, deletes the 5 lines from the cursor
+
+``dw`` deletes the word, where cursor placed 
+
+``/<word>`` searches the word, Press ``Enter`` then ``n`` to search the next occurrence of the same word 
+
+### Insert Mode (ESC + i)
+
+It was just like the normal text file editing mode, after doing the changes follow the 
+extended command for further actions
