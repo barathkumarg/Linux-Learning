@@ -113,3 +113,8 @@ Operations performed in command Mode or after pressing ESC
 
 It was just like the normal text file editing mode, after doing the changes follow the 
 extended command for further actions
+
+## Grep Command
+
+![](../media/Linux_commands/grep_command_1.png)
+![](../media/Linux_commands/grep_command_2.png)
