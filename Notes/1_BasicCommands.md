@@ -1,6 +1,7 @@
 ## Content
 1. [Basic Commands](#basic-linux-commands)
 2. [VI Editor](#vi-editor)
+3. [grep command](#grep-command)
 
 
 ## Basic Linux Commands
