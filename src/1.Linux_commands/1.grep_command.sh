@@ -4,7 +4,7 @@
 grep command syntax:
   grep [options] <search pattern> [filename]
 
-Note: test.txt file used
+Note: test.txt,pattern.txt file used (copy them from misc directory)
 '
 
 # Displays the matched string in file (no option used)

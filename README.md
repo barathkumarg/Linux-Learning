@@ -1,5 +1,7 @@
 # Linux-Learning
 About Linux
+
+Further Linux concepts added in Notes directory, implementation (commands) in src directory
 ## Content
 1. [Introduction](#Introduction)
 2. [Linux - Basic OS Concepts](#os-concepts-for-devops)

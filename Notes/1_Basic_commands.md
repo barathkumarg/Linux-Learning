@@ -119,3 +119,25 @@ extended command for further actions
 
 ![](../media/Linux_commands/grep_command_1.png)
 ![](../media/Linux_commands/grep_command_2.png)
+
+## [Hardlink and softlink](https://www.geeksforgeeks.org/soft-hard-links-unixlinux/)
+![img.png](../media/Linux_commands/hardlink_soflink1.png)
+
+Type of file identified with `ll` or `ls` command in linux
+
+![img.png](https://i.pinimg.com/564x/d3/e7/4a/d3e74a87f423bbb62e39d9de30e6399d.jpg)
+
+### Difference between Hardlink and Sofetlink
+![img.png](../media/Linux_commands/hardlink_softlink_2.png)
+``Note: *inode - Index Number (Like address of the file), ls -il command to view inode number``
+
+### Command
+To create the softlink
+
+``ln -s <source> <destination link>``
+
+To create the hardlink
+
+``ln <source> <destination link>``
+
+Note: Modifying the content reflects in 2 way between original and link files
