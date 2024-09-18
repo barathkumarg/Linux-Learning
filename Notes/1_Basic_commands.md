@@ -2,7 +2,7 @@
 1. [Basic Commands](#basic-linux-commands)
 2. [VI Editor](#vi-editor)
 3. [grep command](#grep-command)
-4. [Soft Hard Link](#hardlink-and-softlinkhttpswwwgeeksforgeeksorgsoft-hard-links-unixlinux)
+4. [Soft Hard Link](#hardlink-and-softlink)
 
 
 ## Basic Linux Commands
