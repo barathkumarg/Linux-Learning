@@ -3,7 +3,7 @@
 2. [VI Editor](#vi-editor)
 3. [grep command](#grep-command)
 4. [Soft Hard Link](#hardlink-and-softlink)
-
+5. [Filter Command](#filter-command)
 
 ## Basic Linux Commands
 
@@ -142,3 +142,12 @@ To create the hardlink
 ``ln <source> <destination link>``
 
 Note: Modifying the content reflects in 2 way between original and link files
+
+## Filter Command
+![img.png](../media/Linux_commands/filter_1.png)
+
+[Sort command in detail](https://www.geeksforgeeks.org/sort-command-linuxunix-examples/)
+[cut command in detail](https://www.geeksforgeeks.org/cut-command-linux-examples/)
+[sed command in detail](https://www.geeksforgeeks.org/sed-command-in-linux-unix-with-examples/)
+[find command in detail](https://www.redhat.com/sysadmin/linux-find-command)
+[locate command in detail](https://www.geeksforgeeks.org/locate-command-in-linux-with-examples/)
