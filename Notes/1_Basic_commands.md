@@ -4,6 +4,7 @@
 3. [grep command](#grep-command)
 4. [Soft Hard Link](#hardlink-and-softlink)
 5. [Filter Command](#filter-command)
+6. [File Permissions](#file-permissions)
 
 ## Basic Linux Commands
 
@@ -155,3 +156,30 @@ Note: Modifying the content reflects in 2 way between original and link files
 [find command in detail](https://www.redhat.com/sysadmin/linux-find-command)
 
 [locate command in detail](https://www.geeksforgeeks.org/locate-command-in-linux-with-examples/)
+
+## File permissions
+![img.png](../media/Linux_commands/file_permission_1.png)
+
+![](https://miro.medium.com/v2/resize:fit:660/0*5FgkfJtRbgCQIJuk.png)
+
+![img.png](../media/Linux_commands/file_permission_2.png)
+
+![](https://i.redd.it/vkxuqbatopk21.png)
+
+example:
+
+Symbolic link: chmod u=rwx,g=rx,o=w file.txt
+
+Absolute link: chmod 752 file.txt
+
+``` 
+Note : Default permission for file in linux is rw r r (644)
+       Default permission for directory in linux rwx rx rx (755)
+```
+
+### Umask
+
+Decider for assigning the default permission for the file
+
+![img.png](../media/Linux_commands/file_permission_3.png)
+
