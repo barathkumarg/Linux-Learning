@@ -2,6 +2,7 @@
 
 1. [File Systems and Partition](#file-systems-and-partition)
 2. [Swap Space creation](#swap-space-creation)
+3. [Logical Volume Management](#logical-volume-management)
 
 ## File Systems and Partition
 ![image](../media/File_system/file_system_1.png)
@@ -27,3 +28,12 @@ Swap Memory - Swap space in Linux is an extension of physical RAM, offering virt
 
 ### [Steps to be followed to create, activate and delete the swap](https://phoenixnap.com/kb/swap-partition)
 ![img_1.png](../media/File_system/swap_2.png)
+
+## Logical Volume Management
+
+LVM enables seamless storage management, allowing administrators to dynamically resize, migrate, and allocate storage space as per their evolving needs, where the actual partition can't
+![img.png](../media/File_system/logical_1.png)
+![img.png](../media/File_system/logical_2.png)
+
+### [Complete LVM Tutorial](https://www.digitalocean.com/community/tutorials/an-introduction-to-lvm-concepts-terminology-and-operations)
+
