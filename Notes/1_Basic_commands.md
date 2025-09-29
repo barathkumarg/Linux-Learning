@@ -5,6 +5,7 @@
 4. [Soft Hard Link](#hardlink-and-softlink)
 5. [Filter Command](#filter-command)
 6. [File Permissions](#file-permissions)
+7. [Run levels](run-levels)
 
 ## Basic Linux Commands
 
@@ -183,3 +184,32 @@ Decider for assigning the default permission for the file
 
 ![img.png](../media/Linux_commands/file_permission_3.png)
 
+## Run levels
+
+[learn](https://www.geeksforgeeks.org/linux-unix/run-levels-linux/)
+
+A runlevel, in other words, can be defined as a preset single-digit integer for defining the operating state of your LINUX or UNIX-based operating system. Each runlevel designates a different system configuration and allows access to different combinations of processes.
+
+
+### Runlevel - Description
+* 0	- System halt i.e., the system can be safely powered off with no activity.
+* 1	- Single user mode.
+* 2	- Multiple user mode with no NFS (network file system).
+* 3	- Multiple user modes under the command line interface and not under the graphical user interface.
+* 4	- User-definable.
+* 5	- Multiple user mode under GUI (graphical user interface) and this is the standard runlevel for most of the LINUX-based systems. (Default)
+* 6	- Reboot which is used to restart the system.
+
+### Command 
+
+To get the current Run level
+
+```bash
+systemctl get-default
+```
+
+To set the Run level
+
+```bash
+systemctl set-default graphical.target
+```

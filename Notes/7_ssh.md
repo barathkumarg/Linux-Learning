@@ -113,3 +113,5 @@ rsync -rv -e ssh /home/file/ username@10.10.10.10:/home/file
 ```
 
 keeps the file directory in sync between the 2 servers
+
+
