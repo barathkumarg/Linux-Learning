@@ -1,9 +1,10 @@
 ## CONTENT
 
 1. [Basic Networking Command](#basic-networking-commandhttpswwwgeeksforgeeksorgnetwork-configuration-trouble-shooting-commands-linux)
-
+2. [DNS](dns)
 
 ## [Basic Networking Command](https://www.geeksforgeeks.org/network-configuration-trouble-shooting-commands-linux/)
+
 
 ### Ping
 
@@ -62,3 +63,24 @@ The Route Command tool helps us display and manipulate the routing table in Linu
 ```commandline
 route
 ```
+
+## DNS
+- The host info stored in `/etc/hosts` file, with IP and name entry
+![](../media/Network/dns_1.png)
+- Used to resolve the IP dynamically DNS used, it will lokk upon `/etc/resolv.conf` for resolution
+
+e.g.
+```commandline
+nameserver <dns server>
+```
+
+- First the entry looks on hosts file then resolve file
+- The order decided by the file `/etc/nsswitch.conf`, can change the order if required 
+
+- DNS server resolution
+![](../media/Network/dns_2.png)
+
+- DNS Search
+- ![](../media/Network/dns_3.png)
+
+

@@ -6,6 +6,7 @@
 5. [Filter Command](#filter-command)
 6. [File Permissions](#file-permissions)
 7. [Run levels](run-levels)
+8. [File Compressing and operations](file-compressing-and-operation)
 
 ## Basic Linux Commands
 
@@ -157,6 +158,7 @@ Note: Modifying the content reflects in 2 way between original and link files
 [find command in detail](https://www.redhat.com/sysadmin/linux-find-command)
 
 [locate command in detail](https://www.geeksforgeeks.org/locate-command-in-linux-with-examples/)
+- Run `updatedb` to update before running the locate command
 
 ## File permissions
 ![img.png](../media/Linux_commands/file_permission_1.png)
@@ -213,3 +215,9 @@ To set the Run level
 ```bash
 systemctl set-default graphical.target
 ```
+
+## File Compressing and operations
+
+![img.png](../media/Basic_commands/archieve-1.png)
+
+![img.png](../media/Basic_commands/compression-1.png)
