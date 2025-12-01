@@ -5,6 +5,12 @@
 3. [Logical Volume Management](#logical-volume-management)
 
 ## File Systems and Partition
+![](../media/File_system/partition_1.png)
+
+![](../media/File_system/partition_2.png)
+
+![](../media/File_system/partition_3.png)
+
 ![image](../media/File_system/file_system_1.png)
 ![image](../media/File_system/file_system_2.png)
 ![image](../media/File_system/file_system_3.png)

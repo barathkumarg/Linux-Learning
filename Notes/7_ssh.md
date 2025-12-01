@@ -85,6 +85,8 @@ scp -r username@10.10.10.10:/home/file/ /home/
 copies the file from destination server to the current server
 ```
 
+- `-p` flag is used to preserve the ownership of the files
+
 Note : while scp it requires the ssh password (if passwordless authentication bot configured) to copy or transfer the files.
 
 

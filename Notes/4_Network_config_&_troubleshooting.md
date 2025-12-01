@@ -2,6 +2,8 @@
 
 1. [Basic Networking Command](#basic-networking-commandhttpswwwgeeksforgeeksorgnetwork-configuration-trouble-shooting-commands-linux)
 2. [DNS](dns)
+3. [IP Tables](ip-tables)
+4. [Cron job](cron-job)
 
 ## [Basic Networking Command](https://www.geeksforgeeks.org/network-configuration-trouble-shooting-commands-linux/)
 
@@ -67,7 +69,7 @@ route
 ## DNS
 - The host info stored in `/etc/hosts` file, with IP and name entry
 ![](../media/Network/dns_1.png)
-- Used to resolve the IP dynamically DNS used, it will lokk upon `/etc/resolv.conf` for resolution
+- Used to resolve the IP dynamically DNS used, it will look upon `/etc/resolv.conf` for resolution
 
 e.g.
 ```commandline
@@ -84,3 +86,61 @@ nameserver <dns server>
 - ![](../media/Network/dns_3.png)
 
 
+## IP Tables
+iptables is a firewall built into Linux.
+
+It controls what network traffic is allowed in or out of your computer or server.
+
+### To install
+```bash
+sudo apt install iptables
+```
+
+### To check the rules
+```commandline
+sudo iptables -L
+```
+
+The above lists the chain of rules to be followed
+
+```commandline
+Chain INPUT - accept the connection/rules be followed
+
+Chain OUTPUT - Control passed to another server 
+```
+
+## Applying rules
+
+- To accept the TCP Connection from the client ip
+
+![](../media/Network/iptables-1.png)
+
+- To drop the connection from all other servers
+
+![](../media/Network/iptables-2.png)
+
+- Some examples
+
+![](../media/Network/iptables-3.png)
+
+- To insert the rule on the top use `-I` instead of `-A`
+
+
+- To Delete
+```commandline
+iptables -D OUTPUT <rule no>
+```
+
+## CRON JOB 
+
+- A scheduler helps to schedule the specific (task/command) to be executed for the defined time
+
+![](../media/Network/cron-1.png)
+
+```commandline
+Note: No sudo was recommended to execute via a ron job
+
+      To schedule the job in every interval  - use step value (/)
+```
+
+- To inspect the cron job ran successfully check in syslog 

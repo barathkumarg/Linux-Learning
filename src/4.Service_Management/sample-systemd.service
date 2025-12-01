@@ -1,0 +1,13 @@
+[Unit]
+Description=Sample systemd service file using Shell, place file in -> /etc/systemd/system/<name>.service
+Documentation=Simple creates the file and writes the date in every 30 seconds
+
+[Service]
+ExecStart=/usr/bin/sample-systemd.sh
+User=barath
+
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy graphical.target

@@ -4,6 +4,7 @@
 2. [Types of User](#types-of-user-in-linux)
 3. [Creating User](#creating-the-user)
 4. [Group Administration](#group-administartion)
+5. [Sudoers](#sudoers)
 
 ## User Administration
 ![img.png](../media/User_Administartion/User_admin_1.png)
@@ -151,3 +152,10 @@ gpasswd -d sasuser sasgroup
 ```
 
 The Addition or deletion of user from the group been verified in ``/etc/group`` file entry.
+
+## Sudoers
+
+- Sudo - Root privileges on the commands
+- `/etc/sudoers` contains the info the permission (root) given to the user
+
+![img](../media/User_Administartion/sudoers_1.png)
