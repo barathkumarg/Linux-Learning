@@ -12,12 +12,35 @@
 
 ### Help docs - man command
 ```man <command>```  displays the description or usage of the actual command
-### Listing the Files or Directory
+### [Listing the Files or Directory](https://www.geeksforgeeks.org/linux-unix/ls-command-in-linux/)
 ```ls``` lists the files or directory in the existing path
 
 ``ll`` detailed description about the files 
 
 ``ls -lhrt`` short hand which displays the detailed description such as created time, file size etc of file or directory
+
+#### Options to know
+
+`-l ` Detailed List
+
+`-h` List Permission, Owner and date details
+
+`-d <directory>` Info about given directory
+
+`-t` Sorts recently changed files
+
+`-r` Reverse the order
+
+`-a` List the hidden files
+
+`-R` List all unhidden files recursively
+
+`-i` List the Inode no
+
+`-n` List UID and GID
+
+`stat <file>` Displays the complete create/modify timestamp of the file or folder
+
 
 ### Creating the file
 ```cat > <filename> ``` ctrl+d to exist creates the file, creates single file at a time can give the content in the next line and exit to

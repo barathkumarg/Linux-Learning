@@ -59,6 +59,30 @@ cat /root/.ssh/authorized_keys
 ```
 - After this config, password prompt is skipped while doing ssh
 
+
+### Add the SSH Config entry
+
+- Add the host config to ssh in the servers
+```commandline
+mkdir -p ~/.ssh
+nano ~/.ssh/config
+
+// Add the host entry as such
+
+Host <name>
+    HostName <ip>
+    User <user name>
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+
+// From the next time 
+ssh <name>
+
+```
+
+
+
+
 ## SCP Secure-Copy
 - Secure copy - Copies the files or directory from one server to another server.
 - internally uses the ssh

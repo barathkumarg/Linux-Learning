@@ -3,6 +3,7 @@
 1. [File Systems and Partition](#file-systems-and-partition)
 2. [Swap Space creation](#swap-space-creation)
 3. [Logical Volume Management](#logical-volume-management)
+4. [External storage SAS, NAS and SAN](#external-storage-nas-das-and-san)
 
 ## File Systems and Partition
 ![](../media/File_system/partition_1.png)
@@ -43,3 +44,13 @@ LVM enables seamless storage management, allowing administrators to dynamically 
 
 ### [Complete LVM Tutorial](https://www.digitalocean.com/community/tutorials/an-introduction-to-lvm-concepts-terminology-and-operations)
 
+
+## External Storage NAS DAS and SAN
+
+- DAS : Direct Attached Storage   (Fast, Reliable and attached to single host)
+- NAS : Network Attached Storage   (Shared storage, Reasonably fast and Network connected (DBMS))
+- SAN : Storage Area Network   (Large scale storage, high availability and secure)
+
+
+- NFS : Network Filesystem  Can be mounted and shared
+- ![](../media/File_system/nfs_1.png)
