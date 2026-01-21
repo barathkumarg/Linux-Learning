@@ -1,6 +1,6 @@
 # Content
 - [RPM and YUM](#rpm-and-yum)
-- [APT and DPKG]()
+- [APT and DPKG](#apt-and-dpkg)
 
 ## RPM 
 

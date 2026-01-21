@@ -147,6 +147,26 @@ extended command for further actions
 ![](../media/Linux_commands/grep_command_1.png)
 ![](../media/Linux_commands/grep_command_2.png)
 
+- Some useful commands
+
+```commandline
+# Match the starting word
+grep '^start' <filename>
+
+# Ending word match
+grep 'end$' <filename>
+
+# Match the start and end letter on word
+grep -wr 'c.t' <filename> i.e: Matches cat, cut
+
+Note: escape with '\' for special characters, i.e \.
+
+# Matches 1 or more (for zero or more * used)
+grep -r '0\+' <filename>   i.e, matches '000'
+
+
+```
+
 ## [Hardlink and softlink](https://www.geeksforgeeks.org/soft-hard-links-unixlinux/)
 ![img.png](../media/Linux_commands/hardlink_soflink1.png)
 
@@ -174,14 +194,96 @@ Note: Modifying the content reflects in 2 way between original and link files
 
 [Sort command in detail](https://www.geeksforgeeks.org/sort-command-linuxunix-examples/)
 
+- Some Useful commands
+
+```commandline
+# To sort and fetch the unique contents
+
+sort filename | uniqu
+```
+
 [cut command in detail](https://www.geeksforgeeks.org/cut-command-linux-examples/)
+
+Some useful cut commands
+
+```commandline
+# To extract the contents from file, delimiter as space, in a first column
+
+cut -d ' ' -f 1 filename.txt
+
+```
 
 [sed command in detail](https://www.geeksforgeeks.org/sed-command-in-linux-unix-with-examples/)
 
+- Some useful sed commands
+
+```commandline
+
+# Replaces the 'canda' to 'canada' in the file for all occurences, without 'g' change done only gor 1 st ocuurence
+
+sed 's/canda/canada/g' filename.txt  
+
+# inplace option to change in the file directly 
+
+sed -i 's/canda/canada' filename.txt --in-place
+
+```
+
 [find command in detail](https://www.redhat.com/sysadmin/linux-find-command)
+
+- Some useful find commands
+```commandline
+find /bin/ -name file.txt  Search for file.txt in /bin directory
+```
+
+```commandline
+find -mmin [minute]  Lists the files modified in mminutes
+
+find -mmin 5  lists file created/modified exactly 5 minutes back
+
+find -mmin -5 lists 5 minutes back
+
+find -mmin +5 lists skiping the last 5 minutes , up to next 5 minute interval
+
+find -mtime [hour]  Works on 24 hour periods
+
+
+```
+
+```commandline
+find -size [size]
+
+find -size 512k   Lists exactly file with 512 kb
+
+find -size +512k greater than 512 kb, if -512 kb less than specified
+```
+
+```commandline
+find -perm 664  Lists file permssion exactly 664
+
+find -perm /664  List any of the given permission
+```
+
+
+Note
+```commandline
+- For or condition chain with -o flag, i.e: find /bin/ -name "f*" -o -size +512k
+
+- For not command -not, i.e: find -not -name "f*" 
+```
 
 [locate command in detail](https://www.geeksforgeeks.org/locate-command-in-linux-with-examples/)
 - Run `updatedb` to update before running the locate command
+
+
+[diff command](https://www.geeksforgeeks.org/linux-unix/diff-command-linux-examples/)
+
+- Some useful commands
+```commandline
+# To compare the files efficiently
+
+sdiff <file 1> <file 2> 
+```
 
 ## File permissions
 ![img.png](../media/Linux_commands/file_permission_1.png)

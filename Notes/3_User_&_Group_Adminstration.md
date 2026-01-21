@@ -5,6 +5,8 @@
 3. [Creating User](#creating-the-user)
 4. [Group Administration](#group-administartion)
 5. [Sudoers](#sudoers)
+6. [Groups and Owners](#groups-and-owners)
+7. [SUID,SGID & Sticky Bit](#suid-sgid--sticky-bit)
 
 ## User Administration
 ![img.png](../media/User_Administartion/User_admin_1.png)
@@ -159,3 +161,42 @@ The Addition or deletion of user from the group been verified in ``/etc/group`` 
 - `/etc/sudoers` contains the info the permission (root) given to the user
 
 ![img](../media/User_Administartion/sudoers_1.png)
+
+## Groups and Owners
+
+- `chgrp <group> <file>` To change the group of file or folder
+- `chown <user> <file>` To change the owner of file or folder
+- `chowb <user>:<group> <file>` To Change both the user and group 
+
+Note: Action requires the `sudo` 
+
+## [SUID, SGID & Sticky-bit](https://www.scaler.com/topics/special-permissions-in-linux/)
+
+- `SUID` Special permission that allows users to run an executable with the permission of the executable's owner
+
+![](../media/User_Administartion/suid.png)
+
+- `S` suid enabled without execute permission
+- `s` suid enabled with executable permission
+
+```commandline
+# First digit should be 4 on chmod
+chmod 4666 <filename>
+```
+
+- `SGID` Similar permission, but applies to both executables and directories, used for collaborating
+
+![](../media/User_Administartion/sgid.png)
+
+
+```commandline
+# First Digit can be 2 
+chmod 2466 <filename>
+
+find . -perm /6000 - To find the files with permission enabled
+```
+
+- `Sticky-bit` A special permission that can be set on directories It restricts file deletion in that directory
+
+![](../media/User_Administartion/stickybit.png)
+
