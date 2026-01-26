@@ -4,6 +4,7 @@
 2. [DNS](dns)
 3. [IP Tables](ip-tables)
 4. [Cron job](cron-job)
+5. [SSL]
 
 ## [Basic Networking Command](https://www.geeksforgeeks.org/network-configuration-trouble-shooting-commands-linux/)
 
@@ -144,3 +145,55 @@ Note: No sudo was recommended to execute via a ron job
 ```
 
 - To inspect the cron job ran successfully check in syslog 
+
+## SSL
+
+- Secure Socket Layer, now (TLS) Transport Layer Security
+- Authenticate and encrypts the data over network
+
+- Openssl  -  Creates and manages the certificate
+
+## Steps Involved in TLS (Transport Layer Security)
+
+1. **Handshake Initiation**: The client sends a "ClientHello" message to the server, indicating supported TLS versions and cipher suites.
+
+2. **Server Response**: The server responds with a "ServerHello" message, selecting the TLS version and cipher suite to use.
+
+3. **Server Authentication and Pre-Master Secret**: The server sends its digital certificate to the client for authentication. The client verifies the certificate and generates a pre-master secret, encrypting it with the server's public key and sending it to the server.
+
+4. **Session Keys Creation**: Both the client and server generate session keys from the pre-master secret for encryption and decryption of the data.
+
+5. **Client Finished**: The client sends a "Finished" message, indicating that the client part of the handshake is complete.
+
+6. **Server Finished**: The server responds with its own "Finished" message, completing the handshake.
+
+7. **Secure Encrypted Connection**: The client and server can now securely exchange data using the established session keys.
+
+8. **Certificate Signing Request (CSR)**: The client generates a CSR, which includes the public key and information about the entity requesting the certificate. This CSR is sent to a Certificate Authority (CA) for verification.
+
+9. **Certificate Verification**: The CA verifies the information in the CSR and issues a digital certificate, which includes the public key and the CA's signature.
+
+10. **Private Key Generation**: The client generates a private key that corresponds to the public key in the CSR. This private key is kept secure and is used for encrypting data and establishing secure connections.
+
+
+Command to generate private key and cert sign request
+
+```commandline
+openssl req -newkey rsa:2048 -keyout key.pem -out req.pem
+```
+
+Command to generate the self signed certificate (used internally)
+
+- Skips the authority verification and self signed cert creation
+
+```commandline
+openssl req -x509 -noexec -newkey rsa:4096 -days 365 -keyout myprivate.key -out mycertificate.crt
+```
+
+To view the details 
+```commandline
+openssl x509 -in mycertificate.crt -text
+```
+
+
+

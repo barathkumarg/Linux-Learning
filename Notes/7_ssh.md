@@ -4,6 +4,7 @@
 - [SSH Passwordless login](#ssh-passwordless-login)
 - [SCP](#scp-secure-copy)
 - [Rsync](#rsync)
+- [Disk imaging](#disk-imaging)
 
 
 ## [SSH](https://www.techtarget.com/searchsecurity/definition/Secure-Shell)
@@ -140,4 +141,19 @@ rsync -rv -e ssh /home/file/ username@10.10.10.10:/home/file
 
 keeps the file directory in sync between the 2 servers
 
+## Disk Imaging
+- To backup the disk partition 
+
+Syntax
+```commandline
+sudo dd if=/dev/vda of=diskimage.raw bs=1M status=progress
+
+if  - input file 
+of  - output file
+bs  - block size (default 1 MB)
+status=progress  -  to show the info
+
+reverse the if, of to import the backup file into disk 
+
+```
 

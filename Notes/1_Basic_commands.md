@@ -7,6 +7,7 @@
 6. [File Permissions](#file-permissions)
 7. [Run levels](run-levels)
 8. [File Compressing and operations](file-compressing-and-operation)
+9. [Basic Input and outpu](#basic-input-and-output-redirection)
 
 ## Basic Linux Commands
 
@@ -162,10 +163,31 @@ grep -wr 'c.t' <filename> i.e: Matches cat, cut
 Note: escape with '\' for special characters, i.e \.
 
 # Matches 1 or more (for zero or more * used)
-grep -r '0\+' <filename>   i.e, matches '000'
-
+grep -r '0\+' <filename>    i.e, matches '000'
 
 ```
+
+- Extended grep 
+```commandline
+# Maching 1 or more occurence via e grep
+
+egrep -r '0{3,}' <file>   i.e, matches 000, 0000
+
+egrep -r '10{,3}' <file>   i.e, matches 1, 10, 1000
+
+egrep -r 'disabled?' <filename>     i.e, matches 'diasabled, disable'
+
+egrep -r 'disabled|enabled' <file>     i.e, either diabled or enabled
+
+egrep -r 'c[u,a]t' <file>     i.e, cut, cat
+
+egrep -r '/dev/[a-z]*[0-9]' <file>    i.e, /dev/a1, not matches /dev/a1a1
+
+egrep -r '/dev/([a-z]*[0-9]?)*' <file>     i.e, now matches /dev/a1a1
+
+egrep -r 'https[^:]' <file>    i.e, matches only https, skips https:
+```
+
 
 ## [Hardlink and softlink](https://www.geeksforgeeks.org/soft-hard-links-unixlinux/)
 ![img.png](../media/Linux_commands/hardlink_soflink1.png)
@@ -221,11 +243,15 @@ cut -d ' ' -f 1 filename.txt
 
 # Replaces the 'canda' to 'canada' in the file for all occurences, without 'g' change done only gor 1 st ocuurence
 
-sed 's/canda/canada/g' filename.txt  
+sed 's/canda/canada/gi' filename.txt  
+
+Note: g - global,  i Case sensitive,  s line  (200,500s) specified line from 200 to 500
 
 # inplace option to change in the file directly 
 
 sed -i 's/canda/canada' filename.txt --in-place
+
+Note: Other delimiter used: #, |
 
 ```
 
@@ -346,3 +372,27 @@ systemctl set-default graphical.target
 ![img.png](../media/Basic_commands/archieve-1.png)
 
 ![img.png](../media/Basic_commands/compression-1.png)
+
+
+![alt text](../media/Basic_commands/compression-tar.png)
+
+## Basic input and output Redirection 
+![alt text](../media/Basic_commands/stdinout.png)
+
+- Commands
+```commandline
+# Redirects the stderr to null, prints only the output
+grep -r '^The' /etc/ 2>/dev/null
+
+# Redirects the  both the stderr and stdout as such
+grep -r '^The' /etc/ 1>output.txt 2>&1
+
+# Redirects to input 
+sendmail someone@dummymail.com < random.txt
+
+# Pass the expression which generates the output
+bc <<<1+2+3+4+5
+output: 10
+
+
+```
