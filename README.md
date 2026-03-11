@@ -337,12 +337,12 @@ The 3 types of Operating Systems commonly used nowadays are: (1) Monolithic OS, 
     - Share a memory area with other processes.
 
 
-- Q) What is Inter Process Communication means?
+- Q: What is Inter Process Communication means?
 
-    - The mechanism in which User Mode processes synchronize themselves and exchange data is referred to as “Inter-process Communication (IPC)” in UNIX Systems (that includes Linux too).
+    - The mechanism in which User Mode processes synchronize themselves and exchange data is referred to as "Inter-process Communication (IPC)" in UNIX Systems (that includes Linux too).
 
 
-- Q) But in what way exactly do terms like: Semaphores, Shared Memory and Message Queues relate to IPC?
+- Q: But in what way exactly do terms like: Semaphores, Shared Memory and Message Queues relate to IPC?
 
     - Semaphores, Shared Memory and Message Queues do relate to IPC in a very special way, since Semaphores, Shared Memory and Message Queues are “Inter-process Communication Resources” or “Inter-process Communication Facilities”, and different in the way they represent IPC from “Inter-process Communication Mechanisms” like Pipes and FIFOs. Semaphores, Shared Memory and Message Queues are System V (AT&T System V.2 release of UNIX) IPC facilities, and they represent wrapper functions that have been developed and inserted in suitable libraries to harness the energy and beauty of IPC mechanisms.
 

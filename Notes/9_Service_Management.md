@@ -12,6 +12,8 @@
 
 ![](../media/Service_Management/systemd-2.png)
 
+![](../media/Service_Management/system-5.png)
+
 - systemctl daemon-reload : To reload the deamon and apply the new changes
 - systemctl edit <filename> --full : To edit the service file and cannot start the process
 

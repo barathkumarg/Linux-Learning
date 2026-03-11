@@ -1,3 +1,7 @@
+# Content
+1. [Booting and Kernel](#booting--kernel) 
+2. [System Boot Restart Commands]
+
 ## Booting & Kernel
 
 Components in the Booting procedure
@@ -60,3 +64,52 @@ Components in the Booting procedure
 [runlevel](https://www.geeksforgeeks.org/run-levels-linux/)
 
 [Run - 1 To recover the root user password](https://gcore.com/learning/how-to-reset-password-in-linux/)
+
+
+## System Boot Restart Commands
+
+- To reboot the system 
+```commandline 
+systemctl reboot
+```
+
+- To Power Off the system 
+```commandline 
+systemctl poweroff
+```
+
+Used  -f to force and `sudo` to elavate permission
+
+- Shutdown commands - handy om scheduled actions
+
+```commandline
+# To shutdown at 2 A.M
+shutdown 02:00
+
+# To shutdown after specified minutes (here :15)
+shutdown +15
+
+# With message, users will be notified on shutdown
+shutdown +1 'Machine Scheduled for shutdown'
+
+
+Note: use `-r` option to reboot
+```
+
+## System info change
+
+- We can change the system prop to use graphical interface, multi user login and so. Following commands modifies
+
+```commandline
+systemctl get default
+
+# Change the mode to multiple user mode
+systemctl set-default multi-user.target
+
+
+Note: requires machine re-boot
+
+# Without reboot use the following
+systemctl isolate graphical.target
+
+```
