@@ -95,6 +95,11 @@ dpkg -s telnet
 dpkg --search <path>
 ```
 
+**List files in package**
+```bash
+dpkg --listfiles <package>
+```
+
 ---
 
 ### APT - Advanced Package Manager (High-level)

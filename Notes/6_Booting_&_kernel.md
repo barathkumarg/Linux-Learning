@@ -113,3 +113,43 @@ Note: requires machine re-boot
 systemctl isolate graphical.target
 
 ```
+
+## Runtime Parameters (sysctl)
+
+Runtime parameters are kernel settings that can be viewed and modified using `sysctl`.
+
+### View Runtime Parameters
+
+- **View all parameters:**
+```commandline
+sudo sysctl -a
+```
+
+- **Check a specific parameter:**
+```commandline
+sudo sysctl <parameter>
+```
+
+### Modify Runtime Parameters
+
+- **Set parameter temporarily (not persistent, reverted on reboot):**
+```commandline
+sudo sysctl -w <parameter>=<value>
+```
+
+### Make Changes Persistent
+
+To ensure sysctl changes survive a reboot:
+
+1. **Save configuration** in `/etc/sysctl.d/*.conf`:
+```commandline
+sudo vi /etc/sysctl.d/99-custom.conf
+# Add your parameters here
+```
+
+2. **Apply changes immediately from configuration file:**
+```commandline
+sudo sysctl -p /etc/sysctl.d/99-custom.conf
+```
+
+Changes will be automatically applied on next boot from the configuration files in `/etc/sysctl.d/`.
