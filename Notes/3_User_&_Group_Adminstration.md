@@ -227,7 +227,7 @@ deployer ALL=(nginx:nginx) /usr/bin/systemctl restart nginx
 
 **5. Production Example - Database Admin:**
 ```bash
-db_admin ALL=(mysql:mysql) NOPASSWD: /usr/bin/systemctl start mysql, /usr/bin/systemctl stop mysql, /usr/bin/systemctl restart mysql
+db_admin ALL=(mysql:mysql) NOPASSWD: /usr/bin/systemctl start mysql, /usr/bin/systemctl stop mysql, /us r/bin/systemctl restart mysql
 ```
 - db_admin can manage MySQL service as mysql user without password
 - Multiple commands separated by commas

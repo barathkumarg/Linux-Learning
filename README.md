@@ -7,6 +7,17 @@ Further Linux concepts added in Notes directory, implementation (commands) in sr
 2. [Linux - Basic OS Concepts](#os-concepts-for-devops)
 3. [SSH](#SSH)
 4. [Linux Architecture / Commands](#linux-architecture)
+5. [Network Configuration](#network-configuration-guides)
+
+## Network Configuration Guides
+
+**Main Guides (Consolidated):**
+- **[23_IPv4_IPv6_Complete_Configuration.md](Notes/23_IPv4_IPv6_Complete_Configuration.md)** - Complete guide to IPv4 and IPv6 addressing, CIDR notation, Netplan configuration, service management, and production scenarios (consolidated from files 17 & 18)
+- **[24_Routing_DNS_Hostname_Complete.md](Notes/24_Routing_DNS_Hostname_Complete.md)** - Network routing, DNS configuration, hostname setup, and name resolution (consolidated from files 19 & 20)
+
+**Quick References & Beginner Guides:**
+- **[21_Network_Configuration_Cheat_Sheet.md](Notes/21_Network_Configuration_Cheat_Sheet.md)** - Quick reference for all network commands and configurations
+- **[22_DNS_and_Hostname_for_Beginners.md](Notes/22_DNS_and_Hostname_for_Beginners.md)** - Simplified guide to DNS, /etc/hosts, /etc/resolv.conf for beginners
 
 # Introduction
 - [Linux History](https://hackernoon.com/an-overview-of-the-linux-operating-system-for-beginners)

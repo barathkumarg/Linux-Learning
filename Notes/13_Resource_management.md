@@ -481,6 +481,426 @@ mkfs.xfs /dev/sdb1
 
 ---
 
+## Disk Partitioning and Management
+
+### lsblk - List Block Devices
+
+The `lsblk` command displays information about all available block devices (disks and partitions) in a tree format.
+
+**Basic Usage:**
+```bash
+lsblk
+```
+
+**Sample Output:**
+```
+NAME        MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda           8:0    0  500G  0 disk
+├─sda1        8:1    0    1G  0 part /boot
+├─sda2        8:2    0  200G  0 part /
+└─sda3        8:3    0  299G  0 part /home
+sdb           8:16   0  1.8T  0 disk
+└─sdb1        8:17   0  1.8T  0 part /data
+nvme0n1     259:0    0  476G  0 disk
+└─nvme0n1p1 259:1    0  476G  0 part
+```
+
+**Display file system types:**
+```bash
+lsblk -f
+```
+
+**Show permissions and owner:**
+```bash
+lsblk -P
+```
+
+**List only disks (no partitions):**
+```bash
+lsblk -d
+```
+
+**Human-readable sizes with all details:**
+```bash
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT
+```
+
+**Production Scenario:**
+```bash
+# New storage added to server, need to verify device
+lsblk
+
+# Identify which device is new (e.g., sdc with 2TB)
+# Check if already partitioned
+lsblk -f | grep sdc
+
+# Verify in monitoring dashboard
+lsblk -o NAME,SIZE,TYPE,MODEL | grep -E "TYPE|sdc"
+
+# Output indicates unpartitioned device ready for setup
+```
+
+---
+
+### fdisk and cfdisk - Partition Management
+
+Disk partitioning tools to create, modify, and delete partitions.
+
+**Interactive Partition Editor - cfdisk (recommended):**
+```bash
+# User-friendly, interactive partitioning
+sudo cfdisk /dev/sdb
+
+# Steps:
+# 1. Select label type (gpt, dos)
+# 2. Create new partition
+# 3. Set partition type
+# 4. Write changes to disk
+```
+
+**Command-line Tool - fdisk:**
+```bash
+# View current partition table
+sudo fdisk -l /dev/sdb
+sudo fdisk -l /dev/sdb | grep sdb1
+
+# Interactive mode
+sudo fdisk /dev/sdb
+```
+
+**Partition Label Types:**
+
+| Type | Usage | Max Partitions | Max Size |
+|------|-------|-----------------|----------|
+| **dos** | Legacy, MBR-based | 4 primary + extended | 2TB per partition |
+| **gpt** | Modern, UEFI systems | Unlimited | 9.4ZB per partition |
+| **sgi** | SGI IRIX systems | Multiple | Large |
+| **sun** | Sun SPARC systems | Multiple | Large |
+
+**Create Partition with cfdisk - Step by Step:**
+```bash
+# 1. Launch cfdisk on unpartitioned disk
+sudo cfdisk /dev/sdb
+
+# 2. In interactive menu:
+#    - Press 'n' for New partition
+#    - Select partition size (e.g., 1000G for 1TB)
+#    - Select partition type (Primary/Extended)
+#    - Press 'd' to delete if needed
+#    - Press 't' to change type
+
+# 3. Verify partition created
+sudo cfdisk /dev/sdb
+
+# 4. Write changes with 'w' (important!)
+#    Or 'q' to quit without saving
+
+# 5. Verify with fdisk
+sudo fdisk -l /dev/sdb
+```
+
+**Production Scenario - Add Storage to Database Server:**
+```bash
+# New 4TB NVMe SSD added to production DB server
+lsblk  # Identify as nvme1n1
+
+# Create GPT partition table (supports > 2TB)
+sudo cfdisk /dev/nvme1n1
+# Select 'gpt' label type
+# Create 4TB partition
+# Write changes
+
+# Verify
+sudo fdisk -l /dev/nvme1n1
+
+# Output:
+# Device        Start        End   Sectors Size Type
+# /dev/nvme1n1p1    2048 8388607   8386560   4T Linux filesystem
+
+# Create file system
+sudo mkfs.ext4 /dev/nvme1n1p1
+
+# Mount permanently
+sudo mkdir -p /data/db
+echo "/dev/nvme1n1p1 /data/db ext4 defaults,noatime 0 0" | sudo tee -a /etc/fstab
+sudo mount -a
+
+# Verify
+df -h /data/db
+```
+
+**Production Scenario - Multiple Small Partitions for Separation:**
+```bash
+# Server with 2TB disk - separate OS, data, and backups
+sudo cfdisk /dev/sdb
+
+# Create partitions:
+# /dev/sdb1: 500GB - Data partition
+# /dev/sdb2: 500GB - Backup partition
+# /dev/sdb3: 1000GB - Archive/Log partition
+
+sudo mkfs.ext4 /dev/sdb1
+sudo mkfs.ext4 /dev/sdb2
+sudo mkfs.xfs /dev/sdb3
+
+# Mount and add to fstab for persistence
+sudo mkdir -p /mnt/data /mnt/backup /mnt/archive
+sudo mount /dev/sdb1 /mnt/data
+sudo mount /dev/sdb2 /mnt/backup
+sudo mount /dev/sdb3 /mnt/archive
+
+# Verify space allocation
+df -h /mnt/*
+```
+
+---
+
+## Swap Management
+
+Swap is disk space used as virtual memory when RAM is exhausted. Essential for system stability under memory pressure.
+
+### Understanding Swap
+
+**When to Use Swap:**
+- System runs out of physical RAM
+- Hibernation (needs swap >= RAM size)
+- OOM protection
+- Memory spikes handling
+
+**Swap Disadvantages:**
+- Much slower than RAM
+- Excessive swapping causes performance degradation
+- Can reduce SSD lifespan
+
+### mkswap - Create Swap Space
+
+Formats a partition or file as swap space.
+
+**On a dedicated partition:**
+```bash
+# Create swap on /dev/sdb2 partition
+sudo mkswap /dev/sdb2
+```
+
+**On a file (for temporary swap):**
+```bash
+# Create 2GB swap file
+sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+
+# Set permissions (only root can access)
+sudo chmod 600 /swapfile
+
+# Format as swap
+sudo mkswap /swapfile
+```
+
+**Sample Output:**
+```
+Setting up swapspace version 1, size = 2 GiB (2147483648 bytes)
+no label, UUID=a1b2c3d4-e5f6-7890-abcd-ef1234567890
+```
+
+### swapon - Enable Swap
+
+Activates swap space for use by the system.
+
+**Enable swap on partition:**
+```bash
+sudo swapon /dev/sdb2
+
+# Verify
+sudo swapon -s
+```
+
+**Enable swap on file:**
+```bash
+sudo swapon /swapfile
+
+# Verify swap is active
+free -h
+```
+
+**Enable all configured swap:**
+```bash
+sudo swapon -a
+```
+
+**Sample Output:**
+```
+Filename        Type       Size    Used Priority
+/dev/sdb2       partition  2097152 0    -2
+/swapfile       file       2097152 0    -3
+```
+
+### swapoff - Disable Swap
+
+Deactivates swap space.
+
+**Disable specific swap:**
+```bash
+sudo swapoff /dev/sdb2
+sudo swapoff /swapfile
+```
+
+**Disable all swap:**
+```bash
+sudo swapoff -a
+```
+
+**Monitor before disabling:**
+```bash
+# Check swap usage
+free -h
+
+# Verify memory is available before removing swap
+# Output: Swap: 4.0Gi   512Mi   3.5Gi (only 512Mi used - safe to disable)
+```
+
+---
+
+### Persistent Swap Configuration
+
+Make swap survive reboot by adding to `/etc/fstab`.
+
+**Add Swap Partition to /etc/fstab:**
+```bash
+# For partition
+echo "/dev/sdb2 none swap sw 0 0" | sudo tee -a /etc/fstab
+
+# Verify
+cat /etc/fstab
+```
+
+**Add Swap File to /etc/fstab:**
+```bash
+# For swap file
+echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab
+
+# Verify
+cat /etc/fstab
+```
+
+**Load all fstab entries at boot:**
+```bash
+# Already automatic, verify with
+sudo systemctl status var-swapfile.swap
+```
+
+---
+
+### Creating Persistent Swap File - Complete Example
+
+Full workflow to create and persist a 2GB swap file:
+
+```bash
+# Step 1: Create empty file (2GB = 2048MB)
+sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+# Output: 2147483648 bytes (2.1 GB, 2.0 GiB) copied, 15.2345 s, 141 MB/s
+
+# Step 2: Restrict permissions (security - only root accesses)
+sudo chmod 600 /swapfile
+
+# Verify permissions
+ls -lh /swapfile
+# Output: -rw------- 1 root root 2.0G Mar 24 10:30 /swapfile
+
+# Step 3: Format as swap space
+sudo mkswap /swapfile
+# Output: Setting up swapspace version 1, size = 2 GiB...
+
+# Step 4: Enable swap immediately
+sudo swapon /swapfile
+
+# Step 5: Verify swap is active
+free -h
+# Output shows 2.0Gi Swap available
+
+# Step 6: Make persistent across reboots
+echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab
+
+# Step 7: Verify configuration
+cat /etc/fstab | tail -3
+
+# Step 8: Test persistence (optional - done on reboot)
+# sudo mount -a
+# free -h
+```
+
+---
+
+### Swap Optimization
+
+**Adjust Swap Usage Priority (swappiness):**
+```bash
+# View current swappiness (0-100)
+cat /proc/sys/vm/swappiness
+
+# Typical value: 60 (uses swap when 40% RAM remains)
+# For servers: reduce to 10-20 (prefer RAM)
+# For desktops: keep at 60
+
+# Temporarily change
+sudo sysctl vm.swappiness=10
+
+# Verify
+cat /proc/sys/vm/swappiness
+
+# Make permanent
+echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.d/99-custom.conf
+sudo sysctl -p
+```
+
+**Monitor Swap Usage:**
+```bash
+# Real-time swap monitoring
+watch -n 1 'free -h'
+
+# Check swap in and out (paging activity)
+vmstat 1 5
+
+# Output columns: si (swap in), so (swap out)
+# High values indicate memory pressure
+```
+
+**Production Scenario - Database Server Swap Setup:**
+```bash
+# 256GB RAM server needs swap for hibernation and OOM protection
+# Current arrangement: 4TB NVMe storage
+
+# Create 16GB swap partition (for hibernation, limited swappiness)
+sudo cfdisk /dev/nvme0n1  # Create 16GB partition
+sudo mkswap /dev/nvme0n1p4
+
+# Enable swap
+sudo swapon /dev/nvme0n1p4
+
+# Make persistent
+echo "/dev/nvme0n1p4 none swap sw 0 0" | sudo tee -a /etc/fstab
+
+# Set swappiness to 10 (prefer RAM, use swap for emergencies)
+echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.d/99-db-server.conf
+sudo sysctl -p
+
+# Monitor configuration
+swapon -s
+cat /proc/sys/vm/swappiness
+free -h
+
+# Alert: If swap usage > 1%, investigate memory leak
+```
+
+**Swap File vs Swap Partition:**
+
+| Aspect | Swap File | Swap Partition |
+|--------|-----------|-----------------|
+| Creation | Easy, no repartitioning | Requires partition | 
+| Performance | Slightly slower | Faster |
+| Resizing | Easy | Complex |
+| Recommended | General server use | High-performance systems |
+| Setup time | Minutes | Requires reboot |
+
+---
+
 ## Complete Monitoring Script
 
 **Production-grade resource monitoring:**
