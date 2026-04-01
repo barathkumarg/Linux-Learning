@@ -9,8 +9,10 @@
 7. [Advanced Mount Options](#advanced-mount-options)
 8. [Swap Space creation](#swap-space-creation)
 9. [Logical Volume Management](#logical-volume-management)
-10. [External Storage DAS, NAS, SAN](#external-storage-nas-das-and-san)
-11. [NFS - Network File System](#nfs---network-file-system)
+10. [Network Block Devices (NBD)](#network-block-devices-nbd)
+11. [External Storage DAS, NAS, SAN](#external-storage-nas-das-and-san)
+12. [NFS - Network File System](#nfs---network-file-system)
+13. [Storage Monitoring and I/O Performance](#storage-monitoring-and-io-performance)
 
 ## File Systems and Partition
 ![](../media/File_system/partition_1.png)
@@ -307,12 +309,543 @@ Swap Memory - Swap space in Linux is an extension of physical RAM, offering virt
 
 ## Logical Volume Management
 
-LVM enables seamless storage management, allowing administrators to dynamically resize, migrate, and allocate storage space as per their evolving needs, where the actual partition can't
+**Overview:** LVM (Logical Volume Manager) allows you to dynamically resize storage without repartitioning the disk. It abstracts physical disks into a flexible layer, enabling easy expansion, movement, and management of storage space.
+
+**Real-World Use Case:**
+- Traditional partitioning: Disk space is fixed (e.g., 100GB to /data, 50GB to /backup). When /data runs out, you must repartition.
+- LVM: Create a pool of available storage, allocate as needed, and grow partitions on-the-fly without downtime.
+
 ![img.png](../media/File_system/logical_1.png)
 ![img.png](../media/File_system/logical_2.png)
 
-### [Complete LVM Tutorial](https://www.digitalocean.com/community/tutorials/an-introduction-to-lvm-concepts-terminology-and-operations)
+### LVM Concepts and Components
 
+**Physical Volume (PV):** A physical disk or partition (/dev/sdc, /dev/sdd)
+- Think of it as raw storage blocks from actual disks
+- Commands: `pvcreate`, `pvs`, `pvdisplay`, `lvmdiskscan`
+
+**Volume Group (VG):** A pool of Physical Volumes
+- Combines multiple disks into one logical storage pool
+- Command: `vgcreate`, `vgs`, `vgdisplay`
+
+**Logical Volume (LV):** Virtual partitions carved from Volume Group
+- Acts like a normal partition (/dev/vg0/data, /dev/vg0/backup)
+- Can be resized dynamically
+- Command: `lvcreate`, `lvs`, `lvdisplay`
+
+### Step 1: Identify and Prepare Physical Volumes
+
+**Scan available disks:**
+```bash
+sudo lvmdiskscan                    # List all disks/partitions suitable for LVM
+lsblk                               # View disk layout
+sudo fdisk -l | grep '/dev/sd'     # List SATA disks
+```
+
+**Create Physical Volumes from disks:**
+```bash
+# Single disk
+sudo pvcreate /dev/sdc
+
+# Multiple disks
+sudo pvcreate /dev/sdc /dev/sdd
+
+# Create on specific partition
+sudo pvcreate /dev/sde1
+
+# Force creation (for data loss)
+sudo pvcreate -f /dev/sdc
+```
+
+**Verify Physical Volumes:**
+```bash
+sudo pvs                            # Brief view
+sudo pvdisplay                      # Detailed view
+sudo pvdisplay /dev/sdc             # Specific PV
+```
+
+**Example Output:**
+```bash
+$ sudo pvs
+  PV         VG    Fmt  Attr PSize   PFree
+  /dev/sdc        lvm2 ---   500.00g 500.00g
+  /dev/sdd        lvm2 ---   500.00g 500.00g
+```
+
+### Step 2: Create Volume Group from Physical Volumes
+
+**Syntax:**
+```bash
+sudo vgcreate <volume_group_name> <physical_volume_path> [...]  
+```
+
+**Create volume group:**
+```bash
+# Single disk
+sudo vgcreate vg_data /dev/sdc
+
+# Multiple disks (combined pool)
+sudo vgcreate vg_storage /dev/sdc /dev/sdd
+
+# PE size (Physical Extent - minimum allocation unit, default 4MB)
+sudo vgcreate -s 8M vg_large /dev/sdc /dev/sdd
+```
+
+**Verify Volume Group:**
+```bash
+sudo vgs                            # Brief view
+sudo vgdisplay                      # Detailed view
+sudo vgdisplay vg_data              # Specific VG
+```
+
+**Example Output:**
+```bash
+$ sudo vgs
+  VG         #PV #LV #SN Attr   VSize   VFree
+  vg_data      1   0   0 wz--n- 500.00g 500.00g
+  vg_storage   2   0   0 wz--n- 1000.00g 1000.00g
+```
+
+**Explanation:**
+- `VSize`: Total size of Volume Group (sum of all PVs)
+- `VFree`: Available space for new Logical Volumes
+- PV/LV: Number of Physical/Logical Volumes in the group
+
+### Step 3: Create Logical Volumes from Volume Group
+
+**Syntax:**
+```bash
+sudo lvcreate -L <size> -n <lv_name> <vg_name>
+sudo lvcreate -l <extents> -n <lv_name> <vg_name>
+```
+
+**Create logical volumes:**
+```bash
+# By size (GB)
+sudo lvcreate -L 100G -n lv_app vg_data          # 100GB partition
+sudo lvcreate -L 50G -n lv_backup vg_data        # 50GB partition
+
+# By percentage of volume group
+sudo lvcreate -l 50%VG -n lv_half vg_storage     # 50% of total VG
+sudo lvcreate -l 100%FREE -n lv_full vg_storage  # All remaining space
+
+# Create striped volume (spans multiple disks for performance)
+sudo lvcreate -L 200G -n lv_stripe -i 2 vg_storage  # Stripe across 2 PVs
+```
+
+**Verify Logical Volumes:**
+```bash
+sudo lvs                            # Brief view
+sudo lvdisplay                      # Detailed view
+sudo lvdisplay /dev/vg_data/lv_app  # Specific LV
+```
+
+**Example Output:**
+```bash
+$ sudo lvs
+  LV        VG         Attr       LSize  Pool Origin Data%
+  lv_app    vg_data    -wi-a----- 100.00g
+  lv_backup vg_data    -wi-a-----  50.00g
+  lv_stripe vg_storage -wi-a----- 200.00g
+```
+
+### Step 4: Create Filesystem and Mount
+
+**Create filesystem on Logical Volume:**
+```bash
+# XFS filesystem
+sudo mkfs.xfs /dev/vg_data/lv_app
+
+# ext4 filesystem
+sudo mkfs.ext4 /dev/vg_data/lv_backup
+
+# With label
+sudo mkfs.xfs -L "App Data" /dev/vg_data/lv_app
+```
+
+**Mount the LV:**
+```bash
+# Temporary mount
+sudo mkdir -p /app /backup
+sudo mount /dev/vg_data/lv_app /app
+sudo mount /dev/vg_data/lv_backup /backup
+
+# Verify
+df -h /app /backup
+```
+
+**Persistent mount in /etc/fstab:**
+```bash
+sudo vi /etc/fstab
+
+# Add:
+/dev/vg_data/lv_app      /app      xfs  rw,noatime           0  2
+/dev/vg_data/lv_backup   /backup   xfs  ro,noatime           0  2
+
+# Test
+sudo mount -a
+```
+
+### Production Example: Enterprise Storage Setup
+
+**Scenario:** Database server with three volumes (data, logs, backups)
+
+```bash
+#!/bin/bash
+set -e
+
+echo "=== LVM Storage Setup ==="
+
+# Step 1: Prepare Physical Volumes
+echo "Creating Physical Volumes..."
+sudo pvcreate /dev/sdc /dev/sdd /dev/sde
+sudo pvs
+
+# Step 2: Create Volume Group (1.5TB pool)
+echo "Creating Volume Group..."
+sudo vgcreate vg_database /dev/sdc /dev/sdd /dev/sde
+sudo vgdisplay vg_database | grep -E 'Name|Size'
+
+# Step 3: Create Logical Volumes
+echo "Creating Logical Volumes..."
+sudo lvcreate -L 800G -n lv_data vg_database          # Database data - 800GB
+sudo lvcreate -L 300G -n lv_logs vg_database          # Database logs - 300GB
+sudo lvcreate -l 100%FREE -n lv_backup vg_database   # Backup - remaining space
+
+sudo lvs vg_database
+
+# Step 4: Create Filesystems
+echo "Creating XFS Filesystems..."
+sudo mkfs.xfs -L "DB-Data" /dev/vg_database/lv_data
+sudo mkfs.xfs -L "DB-Logs" /dev/vg_database/lv_logs
+sudo mkfs.xfs -L "DB-Backup" /dev/vg_database/lv_backup
+
+# Step 5: Mount
+echo "Mounting volumes..."
+sudo mkdir -p /var/lib/mysql/{data,logs,backup}
+sudo mount /dev/vg_database/lv_data /var/lib/mysql/data
+sudo mount /dev/vg_database/lv_logs /var/lib/mysql/logs
+sudo mount /dev/vg_database/lv_backup /var/lib/mysql/backup
+
+# Step 6: Add to /etc/fstab
+echo "Adding to /etc/fstab..."
+sudo tee -a /etc/fstab > /dev/null << EOF
+LABEL=DB-Data    /var/lib/mysql/data    xfs  rw,noatime               0  2
+LABEL=DB-Logs    /var/lib/mysql/logs    xfs  rw,noatime               0  2
+LABEL=DB-Backup  /var/lib/mysql/backup  xfs  ro,noatime               0  2
+EOF
+
+# Step 7: Verify
+echo "=== Final Verification ==="
+echo "Physical Volumes:"
+sudo pvs
+echo ""
+echo "Volume Groups:"
+sudo vgs
+echo ""
+echo "Logical Volumes:"
+sudo lvs -o lv_name,vg_name,lv_size,lv_path
+echo ""
+echo "Mounted Filesystems:"
+df -h /var/lib/mysql/*
+
+echo "\n✓ LVM Storage Setup Complete!"
+```
+
+### Resizing Logical Volumes (Key LVM Benefit)
+
+**Grow Logical Volume - No Downtime!**
+```bash
+# Extend LV by 50GB
+sudo lvextend -L +50G /dev/vg_database/lv_data
+
+# Extend LV to 1TB
+sudo lvextend -L 1T /dev/vg_database/lv_data
+
+# Extend filesystem to match LV (for XFS - online)
+sudo xfs_growfs /var/lib/mysql/data
+
+# For ext4 (online)
+sudo resize2fs /dev/vg_database/lv_data
+```
+
+**Shrink Logical Volume (requires offline resize)**
+```bash
+# Shrink filesystem first
+sudo umount /dev/vg_database/lv_data
+sudo e2fsck -f /dev/vg_database/lv_data
+sudo resize2fs /dev/vg_database/lv_data 400G
+
+# Then shrink LV
+sudo lvreduce -L 400G /dev/vg_database/lv_data
+
+# Remount
+sudo mount /dev/vg_database/lv_data /var/lib/mysql/data
+```
+
+### Complete LVM Tutorial
+[Digital Ocean - Introduction to LVM](https://www.digitalocean.com/community/tutorials/an-introduction-to-lvm-concepts-terminology-and-operations)
+
+
+## Network Block Devices (NBD)
+
+**Overview:** NBD (Network Block Device) allows viewing a network-accessible block device as a local block device on a client machine. Data transfers between a remote NBD server and client over the network, making remote storage appear as local /dev/nbd* devices.
+
+**Use Case:**
+- Share a physical partition between multiple machines without NFS overhead
+- Use remote storage as if it's locally attached (block-level access)
+- Live migration of virtual machines with shared storage
+- Database replication and backup systems
+
+**Difference from NFS:**
+- NFS: File-level sharing (higher latency, suitable for files)
+- NBD: Block-level sharing (lower latency, suitable for partitioning, filesystems, databases)
+
+### NBD Architecture: Server and Client
+
+**NBD Server:** Exports a local block device or partition
+**NBD Client:** Mounts the remote block device locally via network
+
+Server exports real block devices → Client accesses as virtual block devices
+
+### Step 1: Install NBD Server
+
+**Installation:**
+```bash
+sudo apt update
+sudo apt install nbd-server
+sudo systemctl enable nbd-server
+sudo systemctl start nbd-server
+```
+
+**Verify Installation:**
+```bash
+nbd-server -v          # Check version
+which nbd-server       # Verify path
+```
+
+### Step 2: Configure NBD Server (/etc/nbd-server/config)
+
+**File Location:** `/etc/nbd-server/config`
+
+**Configuration Structure:**
+```ini
+[generic]
+    listenaddr = 0.0.0.0        # Server listen address
+    port = 10809                # Default NBD port
+    allowlist = true            # Enable access control
+    includedir = /etc/nbd-server/conf.d  # Include custom configs
+
+[partition1]
+    exportname = /dev/sdb1      # Export device/partition
+    port = 10809                # Port for this export
+    readonly = false            # Read-write access
+
+[partition2]  
+    exportname = /dev/sdc1      # Another device
+    port = 10810                # Different port
+    readonly = true             # Read-only
+    clientname = 192.168.1.100  # Restrict client access
+```
+
+**Complete Example:**
+
+```ini
+[generic]
+    listenaddr = 0.0.0.0
+    port = 10809
+    allowlist = true
+    includedir = /etc/nbd-server/conf.d
+
+[db-data]
+    exportname = /dev/sdb1
+    port = 10809
+    readonly = false
+    clientname = 192.168.1.50   # Only specific host
+
+[backup-storage]
+    exportname = /dev/sdc1
+    port = 10810
+    readonly = true             # Read-only for safety
+    clientname = 192.168.1.*    # Allow subnet
+
+[archive]
+    exportname = /dev/sdd1
+    port = 10811
+    readonly = true
+```
+
+**Restart NBD Server:**
+```bash
+sudo systemctl restart nbd-server
+sudo systemctl status nbd-server
+
+# Verify listening ports
+sudo ss -tlnp | grep nbd-server
+```
+
+### Step 3: Enable Access Control (allowlist, clientname, keys)
+
+**Access Control Features:**
+
+```bash
+# Restrict by client IP
+[export1]
+    exportname = /dev/sdb1
+    clientname = 192.168.1.100  # Single IP
+    readonly = false
+
+# Restrict by subnet
+[export2]
+    exportname = /dev/sdc1
+    clientname = 192.168.*      # Wildcard match
+    readonly = true
+
+# Restrict by hostname
+[export3]
+    exportname = /dev/sdd1
+    clientname = db-server.example.com
+    readonly = false
+```
+
+**File Permissions:**
+```bash
+sudo chmod 644 /etc/nbd-server/config
+sudo chown root:root /etc/nbd-server/config
+
+# Device permissions
+sudo chmod 660 /dev/sdb1
+sudo chown root:root /dev/sdb1
+```
+
+### Step 4: Load NBD Kernel Module
+
+**Manual Loading:**
+```bash
+# Load NBD module
+sudo modprobe nbd
+
+# Create up to 128 NBD devices
+sudo modprobe nbd nbds_max=128
+
+# Verify
+lsmod | grep nbd
+```
+
+**Persistent Loading (/etc/modules-load.d/nbd.conf):**
+```bash
+# Create config file
+sudo bash -c 'echo "nbd nbds_max=128" > /etc/modules-load.d/nbd.conf'
+
+# Verify
+cat /etc/modules-load.d/nbd.conf
+```
+
+### Step 5: Connect NBD Client to Server
+
+**Client Installation:**
+```bash
+sudo apt install nbd-client
+```
+
+**Connect to Server:**
+
+**Syntax:**
+```bash
+sudo nbd-client <server_ip> -p <port> -N <exportname> /dev/nbd<N>
+```
+
+**Examples:**
+```bash
+# Connect to default export on port 10809
+sudo nbd-client 192.168.1.30 -p 10809 /dev/nbd0
+
+# Connect to named export (partition2)
+sudo nbd-client 192.168.1.30 -p 10809 -N partition2 /dev/nbd0
+
+# Connect multiple exports
+sudo nbd-client 192.168.1.30 -p 10809 -N db-data /dev/nbd0
+sudo nbd-client 192.168.1.30 -p 10810 -N backup-storage /dev/nbd1
+```
+
+**Verify Connection:**
+```bash
+lsblk | grep nbd
+sudo ss -tnp | grep nbd-client
+```
+
+### Step 6: Mount Remote Block Device
+
+**Create Filesystem (if new):**
+```bash
+sudo mkfs.xfs -L "RemoteData" /dev/nbd0
+```
+
+**Create Mount Point and Mount:**
+```bash
+sudo mkdir -p /mnt/remote-db
+sudo mount /dev/nbd0 /mnt/remote-db
+
+# Verify
+df -h /mnt/remote-db
+```
+
+**Persistent Mount in /etc/fstab:**
+```bash
+sudo vi /etc/fstab
+
+# Add:
+/dev/nbd0  /mnt/remote-db  xfs  rw,noatime,nofail  0  2
+/dev/nbd1  /mnt/backup     xfs  ro,noatime,nofail  0  2
+
+# Test
+sudo mount -a
+```
+
+### Production Example: Database Backup
+
+**Server (/etc/nbd-server/config):**
+```ini
+[generic]
+    listenaddr = 0.0.0.0
+    port = 10809
+    allowlist = true
+
+[backup-partition]
+    exportname = /dev/sdb1      # 1TB backup device
+    clientname = 192.168.1.100  # DB server IP
+    readonly = false
+    port = 10809
+```
+
+**Client Setup Script:**
+```bash
+#!/bin/bash
+# Connect and mount remote backup
+
+echo "Loading NBD module..."
+sudo modprobe nbd nbds_max=10
+
+echo "Connecting to backup server..."
+sudo nbd-client 192.168.1.30 -p 10809 -N backup-partition /dev/nbd0
+
+sleep 1
+
+echo "Mounting remote partition..."
+sudo mkdir -p /backup/remote
+sudo mount /dev/nbd0 /backup/remote
+
+echo "✓ Remote backup mounted at /backup/remote"
+df -h /backup/remote
+```
+
+**Disconnect:**
+```bash
+sudo umount /dev/nbd0
+sudo nbd-client -d /dev/nbd0
+```
+
+---
 
 ## External Storage NAS DAS and SAN
 
@@ -512,6 +1045,448 @@ grep "nfs" /var/log/syslog      # Check logs
 mount | grep nfs                # Show mounted NFS
 nfsstat                         # Client NFS stats
 showmount -e 192.168.1.50       # View remote server exports
+```
+
+---
+
+## Storage Monitoring and I/O Performance
+
+**Overview:** Storage monitoring tracks I/O performance, disk usage patterns, and system bottlenecks. In production environments, identifying which process consumes excessive disk I/O prevents performance degradation and ensures SLA compliance.
+
+### Installation
+
+**Install sysstat package (contains iostat, pidstat, sar):**
+```bash
+sudo apt update
+sudo apt install sysstat
+```
+
+**Verify Installation:**
+```bash
+iostat --version    # Check iostat version
+pidstat --version   # Check pidstat version
+sar --version       # Check sar version
+```
+
+### Understanding iostat Output
+
+**Syntax:**
+```bash
+iostat                      # Single snapshot
+iostat 1                    # Refresh every 1 second
+iostat 2 5                  # Refresh every 2 seconds, 5 iterations
+iostat -h                   # Human-readable format
+iostat -p sda               # Specific partition monitoring
+iostat -x                   # Extended statistics (detailed I/O)
+```
+
+**Key Metrics Explained:**
+
+| Metric | Meaning | Normal Range |
+|--------|---------|-------------|
+| `tps` | Transactions Per Second (I/O requests) | < 100 tps is healthy |
+| `kB_read/s` | Kilobytes read per second | Varies by workload |
+| `kB_wrtn/s` | Kilobytes written per second | Monitor for sustained high writes |
+| `r/s` | Read requests per second | < 50 r/s normal |
+| `w/s` | Write requests per second | < 50 w/s normal |
+| `util%` | Device utilization percentage | > 80% indicates bottleneck |
+| `await` | Average I/O wait time (ms) | < 10ms is good; > 50ms is concerning |
+| `r_await` | Read await time (ms) | Slow reads indicate contention |
+| `w_await` | Write await time (ms) | Slow writes indicate cache pressure |
+
+**Example Output:**
+```bash
+$ iostat 1
+Linux 6.1.0-18-generic (ubuntu)
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           5.12    0.00    3.45   12.30    0.00   79.13
+
+Device             tps    kB_read/s    kB_wrtn/s    kB_dctime    kB_read    kB_wrtn
+sda              25.50       102.40       156.80        0.00    1024000   1568000
+sdb              18.75        75.20        98.60         0.00     752000    986000
+dm-0             12.30        48.90        62.40         0.00     489000    624000
+```
+
+**Interpretation:**
+- `sda`: 25.50 tps (25 I/O operations/sec), reading 102 MB/s, writing 157 MB/s
+- `util%`: Device utilization at 45% (healthy; > 80% = bottleneck)
+- `await`: 8.5ms average response time (good; < 10ms ideal)
+
+### Detecting Storage Performance Issues
+
+**Extended Statistics (Detailed I/O Analysis):**
+```bash
+# Extended statistics with await times
+iostat -x 1 2
+
+# Specific device with extended stats
+iostat -x -p sda 1
+```
+
+**Extended Output:**
+```bash
+Device: rrqm/s wrqm/s  r/s  w/s  rMB/s  wMB/s r_await w_await util%
+sda      0.00   2.50  8.50 16.20 0.103 0.156   5.2    12.5   45.3
+dm-0     0.00   0.00  6.50 12.80 0.078 0.125   6.8    14.2   38.5
+```
+
+**Metrics:**
+- `r_await` > 20ms: Read latency issue
+- `w_await` > 30ms: Write cache pressure or disk bottleneck
+- `util% > 80%`: Device is saturated
+
+### Finding Processes Using Excessive Disk I/O
+
+**Step 1: Identify High-Activity Process with pidstat**
+
+**Syntax:**
+```bash
+pidstat -d                      # Disk I/O by process (snapshot)
+pidstat -d 1                    # Continuous monitoring, 1-second interval
+pidstat -d 1 5 | grep sda       # Monitor for 5 iterations
+pidstat -d -e CMD               # Show command names
+```
+
+**Key pidstat Metrics:**
+
+| Metric | Meaning |
+|--------|---------|
+| `kB_rd/s` | Kilobytes read per second per process |
+| `kB_wr/s` | Kilobytes written per second per process |
+| `Command` | Process name/command |
+| `PID` | Process ID |
+
+**Example Output:**
+```bash
+$ pidstat -d 1
+Linux 6.1.0-18-generic (ubuntu)
+
+01:23:45 PM   UID       PID  kB_rd/s  kB_wr/s  Command
+01:23:46 PM   1000     2456    102.40 156.80   dd
+01:23:46 PM   1000      834      0.00  2.50   rsync
+01:23:46 PM    0       1234      0.50  1.20   sshd
+```
+
+**Step 2: Identify the Culprit Process**
+
+```bash
+# Find the PID of high I/O process
+pidstat -d 1 | grep -E "kB_rd/s|kB_wr/s" | sort -k5 -nr
+
+# Get process details
+ps -p 2456 -o pid,ppid,user,%mem,%cpu,cmd
+
+# Kill the process if necessary
+sudo kill -9 2456
+```
+
+### Scenario: Simulating Excessive Disk Write
+
+**Problem:** Disk is saturated, application is slow. Need to identify the culprit.
+
+**Step 1: Replicate High I/O Load (for testing/debugging)**
+
+```bash
+# Create large file transfer (write 100GB with dd)
+dd if=/dev/zero of=DELETE bs=1M count=100000 oflag=dsync &
+
+# Monitor progress
+sleep 2
+```
+
+**Step 2: Monitor Disk Activity**
+
+```bash
+# In another terminal - watch I/O in real-time
+iostat -x 1
+
+# Output shows dm-0 (LVM device) with high writes:
+# Device: tps kB_rd/s kB_wrtn/s r_await w_await util%
+# dm-0   950.00 0.00  950000.0  0.0    15.2    98.5
+```
+
+**Step 3: Find the Process**
+
+```bash
+# Find which process is writing
+pidstat -d 1
+
+# Output:
+# PID  kB_rd/s  kB_wr/s  Command
+# 5234     0.00  950000.0  dd
+
+# Get full command
+ps -p 5234 -o cmd=
+# Output: dd if=/dev/zero of=DELETE bs=1M count=100000 oflag=dsync
+```
+
+**Step 4: Find Parent Process Details**
+
+```bash
+# Check user and resource limits
+ps -p 5234 -o pid,ppid,user,rss,vsz,cmd
+
+# Output:
+# PID  PPID  USER RSS(MB) VSZ(MB) CMD
+# 5234 4521  root 1.2    10.4    dd if=/dev/zero...
+
+# Stop the process
+sudo kill -15 5234
+```
+
+### Understanding I/O Devices (LVM and dm devices)
+
+**What is `/dev/dm-0`, `/dev/dm-1`?**
+
+- **dm-N devices:** Logical Volume Manager (LVM) managed volumes
+- **LVM device mapper:** Virtual layer between physical disks and logical volumes
+- **Example:** `/dev/sda1` (physical) → VG (pool) → `/dev/dm-0` (logical volume)
+
+**Get Mapping Information:**
+
+```bash
+# Find which logical volume corresponds to dm-0
+sudo dmsetup info /dev/dm-0
+
+# Output:
+# Name:              vg_data-lv_app
+# State:             LIVE
+# Open count:        1
+# Event number:      0
+# Major, minor:      253, 0
+# Number of targets: 1
+# UUID: LVM-xxxxx
+
+# Get device mapping details
+sudo dmsetup table /dev/dm-0
+
+# Output:
+# 0 2097152 linear /dev/sda1 2048
+# (maps 2GB to /dev/sda1 starting at block 2048)
+```
+
+**Identify Physical Disk Behind dm Device:**
+
+```bash
+# List all LVM devices
+sudo lvs
+
+# Output:
+# LV      VG      Attr LSize   Origin Snap%  Move Log Cpy%Sync
+# lv_app  vg_data -wi-ao 100.00g
+
+# See which physical disks are in volume group
+sudo vgdisplay vg_data
+
+# Detailed mapping
+sudo dmsetup deps /dev/dm-0
+# Output: (253, 0) : (8, 1)
+# (8, 1) is /dev/sda1
+```
+
+### List Block Devices and Identify Storage
+
+**Syntax:**
+```bash
+lsblk                       # Tree view of all block devices
+lsblk -h                    # Human-readable format
+lsblk -f                    # Filesystem info
+lsblk --tree                # Tree format
+lsblk -o NAME,TYPE,SIZE,MOUNT
+```
+
+**Example Output:**
+```bash
+$ lsblk -h
+NAME       TYPE   SIZE MOUNT FSTYPE
+sda        disk   1.0T
+├─sda1     part   500M /boot ext4
+└─sda2     part   950G      
+vg_data-lv_app lvm    100G /app   xfs
+vg_data-lv_backup lvm  50G  /backup xfs
+```
+
+### Get Process Information and Take Action
+
+**Find Process Details:**
+
+```bash
+# Get full command of PID
+ps -p <PID> -o cmd=
+
+# Get process with parent
+ps -p <PID> -o pid,ppid,user,etime,cmd
+
+# Find all processes by user writing to disk
+pidstat -d 1 | grep <username>
+
+# Count processes by user
+ps aux | grep <username> | wc -l
+```
+
+**Stopping High I/O Process:**
+
+```bash
+# Graceful termination (SIGTERM)
+sudo kill -15 <PID>
+
+# Force termination (SIGKILL) - immediate
+sudo kill -9 <PID>
+
+# Kill all processes of a user
+killall -u <username>
+
+# Kill by process name
+killall dd
+```
+
+### IOStat Variants and Advanced Monitoring
+
+**Human-Readable Format:**
+
+```bash
+# Output in MB/s instead of kB/s
+iostat -h 1
+
+# Example:
+# Device  tps    MB_read/s MB_wrtn/s
+# sda    25.50      0.10      0.15
+# sdb    18.75      0.07      0.10
+```
+
+**Monitor Specific Partition:**
+
+```bash
+# Monitor only /dev/sda
+iostat -p sda 1
+
+# Output:
+# Device: tps kB_read/s kB_wrtn/s
+# sda    25.50   102.40   156.80
+# sda1    8.20    12.40     8.50
+# sda2   17.30    90.00   148.30
+```
+
+**Extended Statistics (Latency Analysis):**
+
+```bash
+# Extended with await times
+iostat -x 1
+
+# For CPU details
+iostat -c 1
+
+# Disk + CPU combined
+iostat -cx 1
+```
+
+### Production Monitoring Script
+
+**Continuous Disk Monitoring with Alerts:**
+
+```bash
+#!/bin/bash
+# storage_monitor.sh - Alert on high disk I/O
+
+THRESHOLD_TPS=100
+THRESHOLD_UTIL=80
+THRESHOLD_AWAIT=50
+
+echo "=== Storage I/O Monitoring ==="
+echo "Alerts: tps > ${THRESHOLD_TPS}, util% > ${THRESHOLD_UTIL}%, await > ${THRESHOLD_AWAIT}ms"
+echo ""
+
+while true; do
+  iostat -x 1 2 | tail -5 | while read line; do
+    TPS=$(echo "$line" | awk '{print $2}')
+    UTIL=$(echo "$line" | awk '{print $NF}')
+    AWAIT=$(echo "$line" | awk '{print $(NF-2)}')
+    
+    if (( $(echo "$TPS > $THRESHOLD_TPS" | bc -l) )); then
+      echo "⚠️  WARNING: High TPS on device: $line"
+    fi
+    
+    if (( $(echo "$UTIL > $THRESHOLD_UTIL" | bc -l) )); then
+      echo "🔴 ALERT: Device saturated (util%: $UTIL) - $line"
+      pidstat -d 1 1 | tail -3
+    fi
+  done
+  
+  sleep 5
+done
+```
+
+**Quick Health Check:**
+
+```bash
+#!/bin/bash
+echo "=== Storage Health Check ==="
+
+echo ""
+echo "1. Disk Utilization:"
+df -h | grep -v "Filesystem" | awk '{print $1, $5}' | column -t
+
+echo ""
+echo "2. I/O Performance (top 5 offenders):"
+pidstat -d 1 1 2>/dev/null | tail -6 | sort -k4 -nr | head -5
+
+echo ""
+echo "3. Storage Device Status:"
+iostat -h 1 2 | tail -4
+
+echo ""
+echo "4. High Await Time Check:"
+iostat -x 1 2 | tail -5 | awk '$NF > 50 {print "⚠️  " $1 " - High await: " $NF "ms"}'
+```
+
+**Run Health Check:**
+```bash
+bash storage_monitor.sh
+
+# Output:
+# === Storage Health Check ===
+#
+# 1. Disk Utilization:
+# /dev/sda1 45%
+# /dev/dm-0 62%
+#
+# 2. I/O Performance (top 5 offenders):
+# 2456 102.40 156.80 dd
+# 834  0.00   2.50   rsync
+#
+# 3. Storage Device Status:
+# sda 25.50 tps, 102.40 MB_read/s, 156.80 MB_wrtn/s, 45% util
+#
+# 4. High Await Time Check:
+# ⚠️  sda - High await: 15.2ms
+```
+
+### Quick Reference: Common Commands
+
+```bash
+# Real-time disk I/O
+iostat -x 1
+
+# By process
+pidstat -d 1
+
+# Find device for dm-0
+dmsetup table /dev/dm-0
+
+# LVM status
+lvs
+
+# Block devices
+lsblk -h
+
+# Disk usage
+df -h
+
+# Monitor specific partition
+iostat -p sda 1
+
+# Kill high I/O process
+pidstat -d 1 | head -5  # Find PID → sudo kill -15 <PID>
 ```
 
 ---
