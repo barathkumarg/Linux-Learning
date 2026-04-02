@@ -13,6 +13,7 @@
 11. [External Storage DAS, NAS, SAN](#external-storage-nas-das-and-san)
 12. [NFS - Network File System](#nfs---network-file-system)
 13. [Storage Monitoring and I/O Performance](#storage-monitoring-and-io-performance)
+14. [Access Control Lists (ACL) and File Attributes](#access-control-lists-acl-and-file-attributes)
 
 ## File Systems and Partition
 ![](../media/File_system/partition_1.png)
@@ -1487,6 +1488,544 @@ iostat -p sda 1
 
 # Kill high I/O process
 pidstat -d 1 | head -5  # Find PID → sudo kill -15 <PID>
+```
+
+---
+
+## Access Control Lists (ACL) and File Attributes
+
+### Access Control Lists (ACL) - Advanced File Permissions
+
+**Overview:** Standard Linux file permissions (rwx) support only three categories: owner, group, and others. ACLs (Access Control Lists) extend permissions to define granular access for multiple users and groups on the same file, enabling scenarios where a file needs to be accessed by users who are not the owner and may not be in the owning group.
+
+**When to Use ACL:**
+- Application server needs read access to a database backup owned by another user
+- Contract worker needs temporary access to specific project files
+- Shared project directory where different teams need different permission levels
+- Database backups accessible by multiple DBAs with different permission requirements
+
+**Standard Permissions vs ACL:**
+```
+Standard:     -rw-r--r-- (owner can read/write, group read-only, others read-only)
+With ACL:     -rw-r--r-+ (+ indicates ACL is applied)
+              + user:alice:rwx (Alice can read/write/execute)
+              + user:bob:r-- (Bob can only read)
+              + group:devops:rwx (Devops group has full access)
+```
+
+### Setting ACL Permissions with setfacl
+
+**Syntax:**
+```bash
+sudo setfacl --modify user:<username>:<permissions> <file>
+sudo setfacl --modify group:<groupname>:<permissions> <file>
+sudo setfacl -m u:<username>:<permissions> <file>   # Short form
+sudo setfacl -m g:<groupname>:<permissions> <file>  # Short form
+```
+
+**Permissions:** `r` (read), `w` (write), `x` (execute), combination like `rw`, `rx`, `rwx`, or leave blank for no permissions
+
+**Examples:**
+
+**Example 1: Grant User Read-Write Access**
+```bash
+# User 'alice' gets read-write access to file3
+sudo setfacl -m u:alice:rw /tmp/file3
+
+# Verify
+ls -l /tmp/file3
+# Output: -rw-r--r--+ 1 owner group 0 (note the '+' indicating ACL)
+```
+
+**Example 2: Grant Group Read-Only Access**
+```bash
+# 'developers' group gets read-only access
+sudo setfacl -m g:developers:r /tmp/file3
+
+# Multiple users
+sudo setfacl -m u:alice:rw,u:bob:r,u:charlie:rwx /tmp/file3
+```
+
+**Example 3: Recursive ACL for Directories**
+```bash
+# Apply to directory and all contents
+sudo setfacl -R -m u:alice:rwx /var/www/project/
+
+# Recursive with default for future files
+sudo setfacl -R -m d:u:alice:rwx /var/www/project/
+```
+
+**Example 4: Remove Specific ACL Entry**
+```bash
+# Remove alice's access
+sudo setfacl -x u:alice /tmp/file3
+
+# Remove group access
+sudo setfacl -x g:developers /tmp/file3
+```
+
+**Example 5: Remove All ACL (restore standard permissions)**
+```bash
+sudo setfacl --remove-all /tmp/file3
+sudo setfacl -b /tmp/file3  # Short form
+```
+
+### Viewing ACL Permissions with getfacl
+
+**Syntax:**
+```bash
+getfacl <file>                    # View ACL for single file
+getfacl -R <directory>            # View ACL recursively
+getfacl <file1> <file2> ...       # View multiple files
+```
+
+**Example:**
+
+```bash
+# View ACL on file
+getfacl /tmp/file3
+
+# Output:
+# file: /tmp/file3
+# owner: root
+# group: root
+# user::rw-                    # Owner permissions
+# user:alice:rw-              # Alice has rw access
+# user:bob:r--                # Bob has r access
+# group::r--                  # Group permissions
+# group:developers:r--        # Developers group has r access
+# mask::rw-                   # Effective permission mask
+# other::r--                  # Others permissions
+```
+
+**Understanding ACL Output:**
+
+- `user::rw-` → Owner has read-write
+- `user:alice:rw-` → User 'alice' has read-write (shown with +)
+- `group::r--` → Group 'root' has read-only
+- `mask::rw-` → Maximum permissions (acts as filter for all users/groups)
+- `other::r--` → Others have read-only
+
+### Production Example: Database Backup Access
+
+**Scenario:** Database backups need to be accessed by multiple DBAs, backup scripts, and auditors with different permission levels.
+
+**Setup:**
+
+```bash
+#!/bin/bash
+# Setup ACL for database backup file
+
+BACKUP_FILE="/backup/database_full_backup.sql"
+AUDIT_FILE="/backup/audit.log"
+
+# Create backup as root with restricted permissions
+sudo touch "$BACKUP_FILE" "$AUDIT_FILE"
+sudo chmod 600 "$BACKUP_FILE"  # Only owner can read
+sudo chmod 640 "$AUDIT_FILE"   # Owner rw, group r
+
+# Grant permissions to different users
+echo "Setting up ACLs for database backups..."
+
+# Primary DBA (full access)
+sudo setfacl -m u:dba_primary:rw "$BACKUP_FILE"
+
+# Secondary DBA (read-only)
+sudo setfacl -m u:dba_secondary:r "$BACKUP_FILE"
+
+# Backup automation script (read-only for validation)
+sudo setfacl -m u:backup_user:r "$BACKUP_FILE"
+
+# Auditors (read audit log only)
+sudo setfacl -m u:auditor1:r "$AUDIT_FILE"
+sudo setfacl -m u:auditor2:r "$AUDIT_FILE"
+sudo setfacl -m g:audit_team:r "$AUDIT_FILE"
+
+# Verify
+echo ""
+echo "=== Database Backup ACLs ==="
+getfacl "$BACKUP_FILE"
+echo ""
+getfacl "$AUDIT_FILE"
+
+# Remove access (when contract ends)
+echo ""
+echo "Removing auditor1 access (when contract ends)..."
+sudo setfacl -x u:auditor1 "$AUDIT_FILE"
+getfacl "$AUDIT_FILE"
+```
+
+**Output:**
+```bash
+# Database backup ACL
+file: /backup/database_full_backup.sql
+owner: root
+group: root
+user::rw-
+user:dba_primary:rw-         # Primary DBA - read-write
+user:dba_secondary:r--       # Secondary DBA - read-only
+user:backup_user:r--         # Backup script - read-only
+group::---
+mask::rw-
+other::---
+
+# Audit log ACL
+file: /backup/audit.log
+owner: root
+group: root
+user::rw-
+user:auditor1:r--            # Auditor 1 - read-only
+user:auditor2:r--            # Auditor 2 - read-only
+group::r--
+group:audit_team:r--         # Audit team - read-only
+mask::rw-
+other::---
+```
+
+---
+
+### File Attributes with chattr (immutable, append-only)
+
+**Overview:** Beyond standard permissions (rwx) and ACLs, Linux file attributes provide additional protection through `chattr` (change attributes). These attributes control fundamental file behavior - preventing deletion, restricting to append-only, or freezing files from any modification.
+
+**Common Attributes:**
+
+| Attribute | Symbol | Description | Use Case |
+|-----------|--------|-------------|----------|
+| `immutable` | `i` | File cannot be deleted, renamed, or modified | Critical system configs, ensure compliance |
+| `append` | `a` | File can only be appended (no overwrite) | Log files, audit trails, guarantee data integrity |
+| `secure-delete` | `s` | Data securely deleted (overwritten) | Sensitive files |
+| `no-dump` | `d` | File excluded from backups | Temporary files, cache |
+| `no-atime` | `A` | Disable atime updates | Performance improvement |
+| `compressed` | `c` | File automatically compressed | Large files |
+| `undeletable` | `u` | Data not overwritten on deletion | Recovery capability |
+
+### Append-Only Attribute (+a)
+
+**Purpose:** File can only be appended; existing content cannot be modified or deleted. Perfect for log files and audit trails where data integrity is critical.
+
+**Set Append-Only:**
+```bash
+# Make file append-only
+sudo chattr +a /var/log/audit.log
+
+# Verify
+lsattr /var/log/audit.log
+# Output: -----a----------e-- /var/log/audit.log
+
+# Try to overwrite (will fail)
+echo "new data" > /var/log/audit.log
+# Error: Permission denied (immutable)
+
+# Append works
+echo "new log entry" >> /var/log/audit.log  # ✓ Success
+
+# Try to delete (will fail)
+rm /var/log/audit.log
+# Error: Operation not permitted
+```
+
+**Remove Append-Only:**
+```bash
+sudo chattr -a /var/log/audit.log
+```
+
+**Production Example - Append-Only Logs:**
+
+```bash
+#!/bin/bash
+# Setup append-only for critical audit logs
+
+LOG_FILES=(
+    "/var/log/auth.log"
+    "/var/log/syslog"
+    "/var/log/audit/audit.log"
+    "/var/log/mysql/general_query.log"
+)
+
+echo "Setting append-only attribute on critical logs..."
+for log in "${LOG_FILES[@]}"; do
+    if [[ -f "$log" ]]; then
+        sudo chattr +a "$log"
+        echo "✓ $log is now append-only"
+    else
+        echo "⚠ $log not found"
+    fi
+done
+
+# Verify all logs
+echo ""
+echo "=== Append-Only Log Status ==="
+lsattr "${LOG_FILES[@]}"
+
+# Test: attempt to modify (will fail)
+echo ""
+echo "Testing write protection..."
+echo "test" > /var/log/auth.log 2>&1 || echo "✓ Write overwrite blocked (expected)"
+
+# Append still works
+echo "test" >> /var/log/auth.log && echo "✓ Append succeeded (expected)"
+```
+
+### Immutable Attribute (+i)
+
+**Purpose:** File becomes "frozen" - cannot be deleted, renamed, or modified. No one (including root) can change it without removing the immutable attribute first.
+
+**Set Immutable:**
+```bash
+# Make file immutable
+sudo chattr +i /etc/hostname
+
+# Verify
+lsattr /etc/hostname
+# Output: ----i-----------e-- /etc/hostname
+
+# Try to delete (fails even as root)
+sudo rm /etc/hostname
+# Error: Operation not permitted
+
+# Try to modify (fails)
+sudo echo "newhost" > /etc/hostname
+# Error: Permission denied
+
+# To remove immutable first, unset attribute
+sudo chattr -i /etc/hostname  # Now can be deleted/modified
+```
+
+**Production Example - Protect Critical System Files:**
+
+```bash
+#!/bin/bash
+# Protect critical system configuration files
+
+CRITICAL_FILES=(
+    "/etc/passwd"
+    "/etc/shadow"
+    "/etc/group"
+    "/etc/sudoers"
+    "/etc/hostname"
+    "/root/.ssh/authorized_keys"
+)
+
+echo "Protecting critical system files..."
+for file in "${CRITICAL_FILES[@]}"; do
+    if [[ -f "$file" ]]; then
+        sudo chattr +i "$file"
+        sudo lsattr "$file"
+        echo "✓ $file is immutable"
+    fi
+done
+
+# Prevent accidental modifications to iptables rules
+sudo chattr +i /etc/iptables/rules.v4
+sudo chattr +i /etc/iptables/rules.v6
+
+echo ""
+echo "=== All critical files are immutable ==="
+echo "To modify, first run: sudo chattr -i <filename>"
+```
+
+### Viewing File Attributes with lsattr
+
+**Syntax:**
+```bash
+lsattr <file>                     # View attributes for single file
+lsattr -R <directory>             # Recursive view
+lsattr -d <directory>             # Directory attributes only
+lsattr -v <file>                  # Show version number
+```
+
+**Understanding lsattr Output:**
+
+```bash
+$ lsattr /var/log/auth.log
+-----a----------e-- /var/log/auth.log
+
+# Legend: First 16 characters represent attributes
+# Position 1 (-): secure-delete (s)
+# Position 2 (-): undelete (u)
+# Position 3 (-): compress (c)
+# Position 4 (-): no-dump (d)
+# Position 5 (a): append-only (a) ← This file is append-only
+# Position 6 (-): immutable (i)
+# ...
+# (e) at end: extent format
+```
+
+**Common Outputs Explained:**
+
+```bash
+-----a----------e--   # Append-only (logs, audit trails)
+----i-----------e--   # Immutable (critical configs)
+-----A----------e--   # No-atime updates (performance)
+-su--a----------e--   # Append-only + Secure delete (highly protected)
+--c--A----------e--   # Compressed + No-atime (large files)
+```
+
+### Production Scenario - Multi-Layer File Protection
+
+**Scenario:** Implement comprehensive protection for an e-commerce database backup that must pass compliance audits.
+
+```bash
+#!/bin/bash
+# Multi-layer protection: permissions + ACL + attributes
+
+BACKUP_FILE="/backup/ecommerce_db_backup.sql.gz"
+
+echo "=== Setting up Compliance-Grade File Protection ==="
+
+# Step 1: Create file with restrictive base permissions
+sudo touch "$BACKUP_FILE"
+sudo chmod 600 "$BACKUP_FILE"  # Only owner (backup_user) can read/write
+sudo chown backup_user:backup_group "$BACKUP_FILE"
+
+# Step 2: Set ACL for multiple DBA access
+echo ""
+echo "Step 1: Setting ACL for controlled DBA access..."
+sudo setfacl -m u:dba_primary:r "$BACKUP_FILE"      # DBA Primary - read-only
+sudo setfacl -m u:dba_secondary:r "$BACKUP_FILE"    # DBA Secondary - read-only
+sudo setfacl -m g:compliance:r "$BACKUP_FILE"       # Compliance team - read-only
+
+# Step 3: Set append-only attribute (ensure no accidental overwrite)
+echo ""
+echo "Step 2: Setting append-only attribute..."
+# Actually, for read-only backups, use immutable instead
+sudo chattr +i "$BACKUP_FILE"
+
+# Step 4: Disable backup (ensure backup software doesn't include it)
+sudo chattr +d "$BACKUP_FILE"  # no-dump attribute
+
+# Step 5: Disable atime tracking (performance + security)
+sudo chattr +A "$BACKUP_FILE"
+
+# Verify everything
+echo ""
+echo "=== Final Protection Status ==="
+echo ""
+echo "File Permissions:"
+ls -l "$BACKUP_FILE"
+
+echo ""
+echo "File Attributes:"
+lsattr "$BACKUP_FILE"
+
+echo ""
+echo "ACL Configuration:"
+getfacl "$BACKUP_FILE"
+
+echo ""
+echo "=== Protection Summary ==="
+echo "☑ Base permissions: 600 (owner only)"
+echo "☑ ACL: 3 users/groups with read-only access"
+echo "☑ Immutable attribute: Cannot be deleted/modified (even by root)"
+echo "☑ No-dump attribute: Excluded from regular backups"
+echo "☑ No-atime: Performance optimization"
+echo ""
+echo "To modify/delete this file, admin must:"
+echo "  1. sudo chattr -i $BACKUP_FILE"
+echo "  2. sudo setfacl -b $BACKUP_FILE (if removing ACL)"
+echo "  3. sudo rm/chmod the file"
+```
+
+**Output:**
+```bash
+=== Final Protection Status ===
+
+File Permissions:
+-rw------- 1 backup_user backup_group 1.2G backup_file.sql.gz
+(Only backup_user can read/write in base permissions)
+
+File Attributes:
+---d-i------A--e-- /backup/ecommerce_db_backup.sql.gz
+(d=no-dump, i=immutable, A=no-atime)
+
+ACL Configuration:
+getfacl: Removing leading '/' from absolute path names
+# file: backup/ecommerce_db_backup.sql.gz
+# owner: backup_user
+# group: backup_group
+user::rw-
+user:dba_primary:r--       ← Read-only for DBA Primary
+user:dba_secondary:r--     ← Read-only for DBA Secondary
+group::---
+group:compliance:r--       ← Read-only for Compliance team
+mask::rw-
+other::---
+
+=== Protection Summary ===
+☑ Base permissions: 600 (owner only)
+☑ ACL: 3 users/groups with read-only access
+☑ Immutable attribute: Cannot be deleted/modified (even by root)
+☑ No-dump attribute: Excluded from regular backups
+☑ No-atime: Performance optimization
+
+To modify/delete this file, admin must:
+  1. sudo chattr -i /backup/ecommerce_db_backup.sql.gz
+  2. sudo setfacl -b /backup/ecommerce_db_backup.sql.gz (if removing ACL)
+  3. sudo rm/chmod the file
+```
+
+### Quick Reference: ACL and Attributes
+
+**ACL Commands:**
+```bash
+# Add user access
+sudo setfacl -m u:username:rw /file
+
+# Add group access
+sudo setfacl -m g:groupname:r /file
+
+# Remove user access
+sudo setfacl -x u:username /file
+
+# Remove all ACL
+sudo setfacl -b /file
+
+# View ACL
+getfacl /file
+
+# Recursive ACL
+sudo setfacl -R -m u:username:rwx /directory
+```
+
+**Attribute Commands:**
+```bash
+# Set append-only (logs)
+sudo chattr +a /file
+
+# Remove append-only
+sudo chattr -a /file
+
+# Set immutable (critical files)
+sudo chattr +i /file
+
+# Remove immutable
+sudo chattr -i /file
+
+# View attributes
+lsattr /file
+
+# Multiple attributes
+sudo chattr +d +A +i /file  # no-dump, no-atime, immutable
+```
+
+**Common Use Cases:**
+```bash
+# Log file protection
+sudo chattr +a /var/log/custom.log              # Append-only
+sudo setfacl -m g:admins:r /var/log/custom.log # Admins read-only
+
+# Database backup (immutable)
+sudo chattr +i /backup/database.sql.gz
+sudo setfacl -m u:dba:r /backup/database.sql.gz
+
+# Shared project (collaborative)
+sudo setfacl -R -m g:devteam:rwx /projects/app/
+sudo setfacl -R -m d:g:devteam:rwx /projects/app/
+
+# Secure sensitive file
+sudo chattr +i /etc/shadow                      # Immutable
+sudo setfacl -m u:root:r /etc/shadow            # Root read-only
 ```
 
 ---
