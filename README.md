@@ -2,6 +2,33 @@
 About Linux
 
 Further Linux concepts added in Notes directory, implementation (commands) in src directory
+## Notes Topics
+
+The following topics are covered in detail in the Notes directory:
+
+1. [Basic Commands](Notes/1_Basic_commands.md)
+2. [File Systems and Partitioning](Notes/2_File_systems.md)
+3. [User & Group Administration](Notes/3_User_&_Group_Adminstration.md)
+4. [Network Configuration & Troubleshooting](Notes/4_Network_config_&_troubleshooting.md)
+5. [SELinux Commands & Concepts](Notes/5_Selinux_commands.md)
+6. [Booting & Kernel](Notes/6_Booting_&_kernel.md)
+7. [Vagrant & Virtualization](Notes/7_1_vagrand.md)
+8. [SSH & Remote Access](Notes/7_ssh.md)
+9. [Package Management](Notes/8_Package_management.md)
+10. [Service Management (systemd, etc.)](Notes/9_Service_Management.md)
+11. [Git Commands & Workflows](Notes/10_git_comands.md)
+12. [Process Management](Notes/11_Process_management.md)
+13. [Logging and Journaling](Notes/12_Logging_and_Journaling.md)
+14. [Resource Management](Notes/13_Resource_management.md)
+15. [Docker & Containerization](Notes/14_Docker_Container.md)
+16. [Virtual Machines (KVM/QEMU)](Notes/15_Virtual_Machines_KVM.md)
+17. [LDAP Configuration](Notes/16_LDAP_Configuration.md)
+18. [Network Cheat Sheets & Quick References](Notes/17_Network_Configuration_Cheat_Sheet.md)
+19. [DNS and Hostname Configuration](Notes/18_DNS_and_Hostname_for_Beginners.md)
+20. [IPv4/IPv6 Complete Configuration](Notes/19_IPv4_IPv6_Complete_Configuration.md)
+21. [Network Bridges and Bonds](Notes/20_Network_Bridges_and_Bonds_Complete_Guide.md)
+
+Each topic is available as a separate markdown file in the Notes directory, with practical examples and production-level guidance.
 ## Content
 1. [Introduction](#Introduction)
 2. [Linux - Basic OS Concepts](#os-concepts-for-devops)
@@ -9,15 +36,6 @@ Further Linux concepts added in Notes directory, implementation (commands) in sr
 4. [Linux Architecture / Commands](#linux-architecture)
 5. [Network Configuration](#network-configuration-guides)
 
-## Network Configuration Guides
-
-**Main Guides (Consolidated):**
-- **[23_IPv4_IPv6_Complete_Configuration.md](Notes/23_IPv4_IPv6_Complete_Configuration.md)** - Complete guide to IPv4 and IPv6 addressing, CIDR notation, Netplan configuration, service management, and production scenarios (consolidated from files 17 & 18)
-- **[24_Routing_DNS_Hostname_Complete.md](Notes/24_Routing_DNS_Hostname_Complete.md)** - Network routing, DNS configuration, hostname setup, and name resolution (consolidated from files 19 & 20)
-
-**Quick References & Beginner Guides:**
-- **[21_Network_Configuration_Cheat_Sheet.md](Notes/21_Network_Configuration_Cheat_Sheet.md)** - Quick reference for all network commands and configurations
-- **[22_DNS_and_Hostname_for_Beginners.md](Notes/22_DNS_and_Hostname_for_Beginners.md)** - Simplified guide to DNS, /etc/hosts, /etc/resolv.conf for beginners
 
 # Introduction
 - [Linux History](https://hackernoon.com/an-overview-of-the-linux-operating-system-for-beginners)
