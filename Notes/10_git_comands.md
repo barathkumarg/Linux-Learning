@@ -191,95 +191,120 @@ git push origin --delete hotfix/1.2.1
 
 ## Interactive Rebase
 
-Interactive rebase allows you to rewrite history by editing, reordering, squashing, or splitting commits. Useful for cleaning up local branches before sharing.
+Interactive rebase rewrites commits in a branch so you can edit, reorder, squash, split, or remove commits. It's primarily for cleaning up local history before sharing — avoid rebasing public history.
 
 ### Basic Command
 ```bash
 # Rewrite last N commits
 git rebase -i HEAD~N
 
-# Or specify base commit
+# Or rebase interactively onto a base commit
 git rebase -i <base-commit>
 ```
 
-### Interactive Rebase Operations
+### Common Interactive Commands
+- `pick`  : keep commit as-is
+- `reword`: keep commit but edit message
+- `edit`  : stop after applying commit so you can change content and `--amend`
+- `squash`/`s`: combine commit with previous (open editor to merge messages)
+- `fixup`/`f`: like `squash` but discard this commit's message
+- `drop`  : remove commit from history
 
-In the editor, each commit line starts with a command keyword:
-
-- `pick` - use commit as is
-- `reword` - use commit but edit message
-- `edit` - use commit but stop to amend (change code)
-- `squash` (or `s`) - use commit but combine with previous commit
-- `fixup` (or `f`) - like squash but discard commit message
-- `drop` - remove commit from history
-
-### Example 1: Squash Multiple Commits
-Combine last 3 commits into one:
+### Remove a Commit in the Middle (drop)
+Use interactive rebase and either delete the commit's line or change `pick` → `drop`.
 ```bash
-git rebase -i HEAD~3
-# In editor:
-pick 1111111 Add README
-pick 2222222 Add tests
-pick 3333333 Fix formatting    # Change to: squash
-squash 3333333 Fix formatting
-
-# Git opens editor for combined commit message
-# Edit and save
-```
-
-### Example 2: Edit a Middle Commit
-Change content of a commit in the middle of history:
-```bash
-# History before:
-# 1111111 Add README
-# 2222222 Implement feature A    <- want to change this
-# 3333333 Fix typo
-
-git rebase -i HEAD~3
-# In editor, change 'pick 2222222' to 'edit 2222222'
-
-# Rebase stops at that commit
-# Make your edits to files
-git add <modified-file>
-
-# Amend the commit
-git commit --amend --no-edit    # keep same message
-# OR: git commit --amend -m "new message"
-
-# Continue rebase
+git rebase -i HEAD~4    # open last 4 commits in editor
+# delete the line for the commit you want to remove, or mark it: drop <hash>
 git rebase --continue
-# Commit 2222222 is rewritten with new hash
 ```
 
-### Example 3: Reorder Commits
-Move commits around to change their order:
+### Edit/Add Changes to a Middle Commit (edit + amend)
+If you need to change the content of an earlier commit (not only the message):
 ```bash
-# History: A->B->C->D, want C before B
+git rebase -i <base>    # e.g. git rebase -i HEAD~5
+# In editor change 'pick <hash>' to 'edit <hash>' for the target commit
 
-git rebase -i HEAD~4
-# In editor, move C's line before B's line
-# Save and exit
-# Rebase replays in new order
+# When rebase stops you can modify files
+# Make edits, stage them
+git add <files>
+
+# Amend the stopped commit (keep or change message)
+git commit --amend --no-edit    # keep original message
+# or: git commit --amend -m "improved message"
+
+# Continue replaying the remaining commits
+git rebase --continue
 ```
 
-### Example 4: Delete a Commit
+Alternative: if the changes already exist in a later commit and you want them merged into the middle commit, reorder commits in the editor so the later commit appears immediately after the target, then mark the later commit as `squash` or `fixup` to combine them.
+
+### Example: Take changes from a later commit into a middle commit
+1. `git rebase -i HEAD~4` and reorder lines so the later commit is directly after the target commit.
+2. Change the later commit's `pick` to `squash` (or `fixup`) to merge its changes into the previous (target) commit.
+
+### Autosquash Workflow (`--autosquash`)
+Use `git commit --fixup=<hash>` or `--squash=<hash>` to mark a new commit that should be folded into an earlier one, then run interactive rebase with `--autosquash` to apply the directives automatically.
 ```bash
-git rebase -i HEAD~4
-# In editor, delete the entire line OR change 'pick' to 'drop'
-# Save and exit
+# Create a fixup commit pointing to the commit you want to fix
+git commit --fixup=<commit-hash>
+
+# Then run interactive rebase with autosquash
+git rebase -i --autosquash <base>
 ```
 
-### Recovering from Rebase Mistakes
+### Rebase Onto a Different Base (`--onto`)
+Useful to transplant a sequence of commits onto a different branch or to drop an intermediate branch.
 ```bash
-# Cancel in-progress rebase if something goes wrong
-git rebase --abort
-
-# Find previous state using reflog
-git reflog
-
-# Restore to a previous state
-git switch -c recover <reflog-commit-hash>
+# Move commits A..B (exclusive/inclusive depending on notation) onto new-base
+git rebase --onto <new-base> <upstream> <branch>
+# Example: move feature commits after upstream `main` onto `release`:
+git rebase --onto release main feature
 ```
+
+### Useful Flags During Rebase
+- `git rebase --continue`    : continue after resolving conflicts
+- `git rebase --abort`       : cancel and return to original HEAD
+- `git rebase --skip`        : skip the patch that failed to apply
+- `git rebase -i --autosquash`: apply `fixup!`/`squash!` directives automatically
+- `git rebase --exec 'cmd'`  : run `cmd` after each commit (useful for tests)
+
+### Safety, Recovery & Best Practices
+- Avoid rebasing public history. If you must rewrite pushed commits, use `git push --force-with-lease` and coordinate with the team.
+- If a rebase goes wrong: `git rebase --abort`
+- Use `git reflog` to find previous tips and recover lost commits:
+   ```bash
+   git reflog
+   git switch -c recover <reflog-commit-hash>
+   ```
+
+### Concise Rebase Cheatsheet (common workflows)
+- Update feature branch with remote main (no merge commits):
+   ```bash
+   git fetch origin
+   git rebase origin/main
+   ```
+- Clean last N commits interactively:
+   ```bash
+   git rebase -i HEAD~N
+   ```
+- Drop a commit:
+   ```bash
+   git rebase -i <base>   # remove the line or change to 'drop'
+   ```
+- Merge a later commit into an earlier one (squash):
+   ```bash
+   git rebase -i <base>   # reorder so later commit follows earlier commit
+   # change later commit to 'squash' or use --autosquash with fixup commits
+   ```
+
+### Quick Recovery Tips
+- If you accidentally overwrite remote history: stop and notify team, then restore from reflog or remote branch if available.
+- To push rewritten branch safely:
+   ```bash
+   git push --force-with-lease origin feature/branch
+   ```
+
+<!-- end interactive rebase section -->
 
 ---
 
